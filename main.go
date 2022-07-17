@@ -1,7 +1,7 @@
 package main
 
 import (
-	"belajar-gin/handlers"
+	"belajar-gin/routers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,12 +9,9 @@ import (
 func main() {
 	router := gin.Default()
 
-	// make api version
-	v1 := router.Group("/v1")
+	// init routes
+	routers.V1(router)
 
-	v1.GET("/", handlers.RootHandler)
-	v1.GET("/mahasiswa", handlers.GetAllMahasiswa)
-	v1.GET("/mahasiswa/:id", handlers.GetMahasiswa)
-
+	// listen on port 8040
 	router.Run(":8040")
 }
