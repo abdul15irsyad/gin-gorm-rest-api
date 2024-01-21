@@ -6,6 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Root( route *gin.Engine) {
+func RootRoutes(route *gin.Engine) {
 	route.GET("/", controllers.Root)
 }
