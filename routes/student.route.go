@@ -7,7 +7,10 @@ import (
 )
 
 func StudentRoutes(route *gin.Engine) {
-	routerGroup := route.Group("/students")
-	routerGroup.GET("/", controllers.GetAllStudent)
-	routerGroup.GET("/:id", controllers.GetStudent)
+	studentRoute := route.Group("/students")
+	studentRoute.GET("/", controllers.GetAllStudent)
+	studentRoute.GET("/:id", controllers.GetStudent)
+	studentRoute.POST("/", controllers.CreateStudent)
+	studentRoute.PATCH("/:id", controllers.UpdateStudent)
+	studentRoute.DELETE("/:id", controllers.DeleteStudent)
 }

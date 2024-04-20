@@ -1,7 +1,7 @@
 package main
 
 import (
-	"belajar-gin/configs"
+	"belajar-gin/database"
 	"belajar-gin/routes"
 	"log"
 	"os"
@@ -17,7 +17,7 @@ func main() {
 		log.Fatalf("Error loading `.env` file: %s", err)
 	}
 	router := gin.Default()
-	configs.Database()
+	database.Database()
 
 	// init routes
 	router.Use(cors.New(cors.Config{
