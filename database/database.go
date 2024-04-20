@@ -11,7 +11,7 @@ import (
 
 var DB *gorm.DB
 
-func Database() {
+func InitDatabase() {
 	DB_HOST := os.Getenv("DB_HOST")
 	DB_PORT := os.Getenv("DB_PORT")
 	DB_USER := os.Getenv("DB_USER")
@@ -27,13 +27,9 @@ func Database() {
 		log.Println("Database connected")
 	}
 
-	err = db.AutoMigrate(&models.Student{})
-	if err != nil {
-		panic("Failed migrate!")
-	}
 	err = db.AutoMigrate(&models.User{})
 	if err != nil {
-		panic("Failed migrate!")
+		panic(err.Error())
 	}
 
 	DB = db

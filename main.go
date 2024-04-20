@@ -3,7 +3,7 @@ package main
 import (
 	"belajar-gin/database"
 	"belajar-gin/routes"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/gin-contrib/cors"
@@ -12,23 +12,28 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading `.env` file: %s", err)
-	}
+	godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Fatalf("error loading `.env` file: %s", err)
+	// }
 	router := gin.Default()
-	database.Database()
+	database.InitDatabase()
 
-	// init routes
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:  []string{"*"},
 		AllowMethods:  []string{"*"},
 		AllowHeaders:  []string{"*"},
 		AllowWildcard: true,
 	}))
-	routes.InitRoutes(router)
+
+	// init routes
+	routes.RootRoutes(router)
+	routes.UserRoutes(router)
+	routes.AuthRoutes(router)
 
 	// listen on port
-	PORT := os.Getenv("PORT")
-	router.Run("localhost:" + PORT)
+	Port := os.Getenv("PORT")
+	Env := os.Getenv("ENV")
+	fmt.Println("environment=" + Env)
+	router.Run("localhost:" + fmt.Sprint(Port))
 }

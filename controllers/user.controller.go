@@ -8,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -24,8 +24,21 @@ func GetAllUser(ctx *gin.Context) {
 }
 
 func GetUser(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	paramId := ctx.Param("id")
+	var getUserDto dto.GetUserDto
+	ctx.ShouldBind(&getUserDto)
+	getUserDto.Id = paramId
+	validationErrors := utils.Validate(getUserDto)
+	if validationErrors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  validationErrors,
+		})
+		return
+	}
+
 	var user models.User
+	id, _ := uuid.Parse(paramId)
 	result := database.DB.First(&user, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -43,7 +56,7 @@ func GetUser(ctx *gin.Context) {
 
 func CreateUser(ctx *gin.Context) {
 	var createUserDto dto.CreateUserDto
-	ctx.ShouldBindJSON(&createUserDto)
+	ctx.ShouldBind(&createUserDto)
 	validationErrors := utils.Validate(createUserDto)
 	if validationErrors != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -53,11 +66,20 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
+	// save to database
 	hashedPassword, _ := utils.HashPassword(createUserDto.Password)
+	randomUuid, err := uuid.NewRandom()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 	user := models.User{
-		Name:     createUserDto.Name,
-		Email:    createUserDto.Email,
-		Password: string(hashedPassword),
+		BaseModel: models.BaseModel{Id: randomUuid},
+		Name:      createUserDto.Name,
+		Email:     createUserDto.Email,
+		Password:  string(hashedPassword),
 	}
 	database.DB.Save(&user)
 
@@ -68,9 +90,10 @@ func CreateUser(ctx *gin.Context) {
 }
 
 func UpdateUser(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	paramId := ctx.Param("id")
 	var updateUserDto dto.UpdateUserDto
-	ctx.ShouldBindJSON(&updateUserDto)
+	ctx.ShouldBind(&updateUserDto)
+	updateUserDto.Id = paramId
 	validationErrors := utils.Validate(updateUserDto)
 	if validationErrors != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -80,7 +103,9 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 
+	// save to database
 	var user models.User
+	id, _ := uuid.Parse(paramId)
 	result := database.DB.First(&user, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -89,7 +114,6 @@ func UpdateUser(ctx *gin.Context) {
 		})
 		return
 	}
-
 	user.Name = updateUserDto.Name
 	user.Email = updateUserDto.Email
 	if updateUserDto.Password != nil {
@@ -106,8 +130,21 @@ func UpdateUser(ctx *gin.Context) {
 }
 
 func DeleteUser(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	paramId := ctx.Param("id")
+	var getUserDto dto.GetUserDto
+	ctx.ShouldBind(&getUserDto)
+	getUserDto.Id = paramId
+	validationErrors := utils.Validate(getUserDto)
+	if validationErrors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  validationErrors,
+		})
+		return
+	}
+
 	var user models.User
+	id, _ := uuid.Parse(paramId)
 	result := database.DB.First(&user, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
