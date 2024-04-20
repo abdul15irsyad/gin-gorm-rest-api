@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"belajar-gin/database"
+	"belajar-gin/dto"
 	"belajar-gin/models"
+	"belajar-gin/utils"
 	"errors"
 	"net/http"
 	"strconv"
@@ -15,8 +17,8 @@ func GetAllStudent(ctx *gin.Context) {
 	var students []models.Student
 	database.DB.Find(&students)
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":  "get all student",
-		"data": students,
+		"message": "get all student",
+		"data":    students,
 	})
 }
 
@@ -26,26 +28,38 @@ func GetStudent(ctx *gin.Context) {
 	result := database.DB.First(&student, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"msg":  "data not found",
-			"data": nil,
+			"message": "data not found",
+			"data":    nil,
 		})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":  "get student",
-		"data": student,
+		"message": "get student",
+		"data":    student,
 	})
 }
 
 func CreateStudent(ctx *gin.Context) {
-	var student models.Student
-	ctx.ShouldBindJSON(&student)
+	var createStudentDto dto.CreateStudentDto
+	ctx.ShouldBindJSON(&createStudentDto)
+	errors := utils.Validate(createStudentDto)
+	if errors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  errors,
+		})
+		return
+	}
 
+	var student models.Student
+	student.Name = createStudentDto.Name
+	student.Year = createStudentDto.Year
 	database.DB.Save(&student)
+
 	ctx.JSON(http.StatusCreated, gin.H{
-		"msg":  "create student",
-		"data": student,
+		"message": "create student",
+		"data":    student,
 	})
 }
 
@@ -55,22 +69,30 @@ func UpdateStudent(ctx *gin.Context) {
 	result := database.DB.First(&student, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"msg":  "data not found",
-			"data": nil,
+			"message": "data not found",
+			"data":    nil,
 		})
 		return
 	}
 
-	var updatedStudent models.Student
+	var updatedStudent dto.UpdateStudentDto
 	ctx.ShouldBindJSON(&updatedStudent)
+	errors := utils.Validate(updatedStudent)
+	if errors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  errors,
+		})
+		return
+	}
+
 	student.Name = updatedStudent.Name
 	student.Year = updatedStudent.Year
-
 	database.DB.Save(&student)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":  "update student",
-		"data": student,
+		"message": "update student",
+		"data":    student,
 	})
 }
 
@@ -80,8 +102,8 @@ func DeleteStudent(ctx *gin.Context) {
 	result := database.DB.First(&student, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"msg":  "data not found",
-			"data": nil,
+			"message": "data not found",
+			"data":    nil,
 		})
 		return
 	}
@@ -89,7 +111,7 @@ func DeleteStudent(ctx *gin.Context) {
 	database.DB.Delete(&student)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":  "delete student",
-		"data": nil,
+		"message": "delete student",
+		"data":    nil,
 	})
 }

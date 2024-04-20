@@ -31,6 +31,10 @@ func Database() {
 	if err != nil {
 		panic("Failed migrate!")
 	}
+	err = db.AutoMigrate(&models.User{})
+	if err != nil {
+		panic("Failed migrate!")
+	}
 
 	DB = db
 }
