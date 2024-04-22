@@ -1,4 +1,4 @@
-module belajar-gin
+module gin-gorm-rest-api
 
 go 1.18
 

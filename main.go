@@ -1,9 +1,9 @@
 package main
 
 import (
-	"belajar-gin/database"
-	"belajar-gin/routes"
 	"fmt"
+	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/routes"
 	"os"
 
 	"github.com/gin-contrib/cors"

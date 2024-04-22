@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"belajar-gin/database"
-	"belajar-gin/dto"
-	"belajar-gin/models"
-	"belajar-gin/utils"
 	"errors"
 	"fmt"
+	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

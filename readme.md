@@ -14,8 +14,8 @@ project for learning golang with gin framework and gorm as ORM
 1. pull repository
 
    ```bash
-   git clone git@github.com:abdul15irsyad/belajar-gin.git
-   cd belajar-gin
+   git clone git@github.com:abdul15irsyad/gin-gorm-rest-api.git
+   cd gin-gorm-rest-api
    ```
 
 2. install dependencies

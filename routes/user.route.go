@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"belajar-gin/controllers"
+	"gin-gorm-rest-api/controllers"
 
 	"github.com/gin-gonic/gin"
 )
