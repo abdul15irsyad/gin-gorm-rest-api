@@ -2,12 +2,13 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,11 +16,31 @@ import (
 )
 
 func GetAllUser(ctx *gin.Context) {
-	var users []models.User
-	database.DB.Find(&users)
+	page, err := strconv.Atoi(ctx.Query("page"))
+	if err != nil || page <= 0 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(ctx.Query("pageSize"))
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	search := ctx.Query("search")
+	users, total, totalPage, err := services.GetPaginatedUsers(page, limit, &search)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get all user",
 		"data":    users,
+		"meta": gin.H{
+			"currentPage": page,
+			"pageSize":    limit,
+			"totalPages":  totalPage,
+			"totalItems":  total,
+		},
 	})
 }
 
@@ -67,7 +88,13 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	// save to database
-	hashedPassword, _ := utils.HashPassword(createUserDto.Password)
+	hashedPassword, err := utils.HashPassword(createUserDto.Password)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 	randomUuid, err := uuid.NewRandom()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -117,8 +144,13 @@ func UpdateUser(ctx *gin.Context) {
 	user.Name = updateUserDto.Name
 	user.Email = updateUserDto.Email
 	if updateUserDto.Password != nil {
-		fmt.Print(updateUserDto.Password)
-		hashedPassword, _ := utils.HashPassword(*updateUserDto.Password)
+		hashedPassword, err := utils.HashPassword(*updateUserDto.Password)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
 		user.Password = string(hashedPassword)
 	}
 	database.DB.Save(&user)

@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
@@ -18,7 +17,6 @@ import (
 func Login(ctx *gin.Context) {
 	var loginDto dto.LoginDto
 	ctx.ShouldBind(&loginDto)
-	fmt.Print(loginDto)
 	validationErrors := utils.Validate(loginDto)
 	if validationErrors != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

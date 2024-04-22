@@ -22,12 +22,16 @@ func InitDatabase() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		panic("Failed to connect to database!")
+		panic(err.Error())
 	} else {
-		log.Println("Database connected")
+		log.Println("database connected")
 	}
 
 	err = db.AutoMigrate(&models.User{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = db.AutoMigrate(&models.Seeder{})
 	if err != nil {
 		panic(err.Error())
 	}

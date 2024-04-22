@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/routes"
+	"log"
 	"os"
 
 	"github.com/gin-contrib/cors"
@@ -12,10 +13,10 @@ import (
 )
 
 func main() {
-	godotenv.Load(".env")
-	// if err != nil {
-	// 	log.Fatalf("error loading `.env` file: %s", err)
-	// }
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("error loading `.env` file: %s", err)
+	}
 	router := gin.Default()
 	database.InitDatabase()
 
@@ -34,6 +35,6 @@ func main() {
 	// listen on port
 	Port := os.Getenv("PORT")
 	Env := os.Getenv("ENV")
-	fmt.Println("environment=" + Env)
+	log.Println("environment=" + Env)
 	router.Run("localhost:" + fmt.Sprint(Port))
 }
