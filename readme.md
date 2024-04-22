@@ -1,4 +1,4 @@
-# Learning Gin Gorm
+# Gin Gorm REST API
 
 project for learning golang with gin framework and gorm as ORM
 
