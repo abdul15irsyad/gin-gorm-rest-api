@@ -8,6 +8,6 @@ import (
 
 func Root(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Gin REST API with GORM",
+		"message": "gin rest api with gorm",
 	})
 }

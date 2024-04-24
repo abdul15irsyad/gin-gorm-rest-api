@@ -15,9 +15,10 @@ import (
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("error loading `.env` file: %s", err)
+		log.Fatal("error loading `.env` file: " + fmt.Sprint(err))
 	}
 	router := gin.Default()
+
 	database.InitDatabase()
 
 	router.Use(cors.New(cors.Config{
@@ -26,6 +27,7 @@ func main() {
 		AllowHeaders:  []string{"*"},
 		AllowWildcard: true,
 	}))
+	router.SetTrustedProxies([]string{})
 
 	// init routes
 	routes.AuthRoutes(router)
