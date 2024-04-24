@@ -20,8 +20,7 @@ func Auth(ctx *gin.Context) {
 		return
 	}
 	accessToken := strings.Split(authorization, " ")[1]
-	var payload utils.CustomClaims
-	err := utils.ValidateJwt(&payload, accessToken)
+	payload, err := utils.ValidateJwt(accessToken)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -31,7 +30,7 @@ func Auth(ctx *gin.Context) {
 
 	// check to database
 	var authUser models.User
-	result := database.DB.Where("id = ?", payload.Id).First(&authUser)
+	result := database.DB.Where("id = ?", (*payload).Id).First(&authUser)
 	if result.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "invalid credential",

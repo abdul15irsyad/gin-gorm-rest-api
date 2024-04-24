@@ -32,7 +32,7 @@ func GenerateJwt(id uuid.UUID, isRefreshToken bool, exp time.Duration) (*string,
 	return &tokenString, nil
 }
 
-func ValidateJwt(payload *CustomClaims, tokenString string) error {
+func ValidateJwt(tokenString string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -41,14 +41,13 @@ func ValidateJwt(payload *CustomClaims, tokenString string) error {
 		return jwtSecretKey, nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok {
-		return err
+		return nil, err
 	}
 
-	*payload = *claims
-	return nil
+	return claims, nil
 }
