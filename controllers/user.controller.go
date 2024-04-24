@@ -5,7 +5,6 @@ import (
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
-	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 	"strconv"
@@ -25,7 +24,7 @@ func GetAllUser(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	users, total, totalPage, err := services.GetPaginatedUsers(page, limit, &search)
+	users, total, totalPage, err := models.GetPaginatedUsers(database.DB, page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),

@@ -13,37 +13,41 @@ import (
 	"gorm.io/gorm"
 )
 
-func SeedUsers() error {
-	var seeder models.Seeder
-	result := database.DB.Where("name = ?", "SeedUsers").First(&seeder)
+func SeedUsers() {
+	const name = "SeedUsers"
+	var (
+		seeder         models.Seeder
+		newUuid        uuid.UUID
+		hashedPassword []byte
+	)
+	result := database.DB.Where("name = ?", name).First(&seeder)
 
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil
+		return
 	}
+
+	newUuid, _ = uuid.Parse("b0e18329-a7c9-4bea-9efc-72b34818ff14")
+	hashedPassword, _ = utils.HashPassword("Qwerty123")
+	var user1 models.User
+	user1.Id = newUuid
+	user1.Name = "irsyad"
+	user1.Email = "irsyad@email.com"
+	user1.Password = string(hashedPassword)
 
 	users := []models.User{
-		{
-			Name:     "irsyad",
-			Email:    "irsyad@email.com",
-			Password: "Qwerty123",
-		},
+		user1,
 	}
-	for i := 1; i <= 30; i++ {
+	usersLength := len(users)
+	for i := 1; i <= 30-usersLength; i++ {
+		randomUuid, _ := uuid.NewRandom()
+		hashedPassword, _ := utils.HashPassword("Qwerty123")
 		user := models.User{
-			Name:     "User " + fmt.Sprint(i),
-			Email:    "user" + fmt.Sprint(i) + "@email.com",
-			Password: "Qwerty123",
+			BaseModel: models.BaseModel{Id: randomUuid},
+			Name:      "User " + fmt.Sprint(i),
+			Email:     "user" + fmt.Sprint(i) + "@email.com",
+			Password:  string(hashedPassword),
 		}
 		users = append(users, user)
-	}
-
-	for i := 0; i < len(users); i++ {
-		hashedPassword, _ := utils.HashPassword(users[i].Password)
-		randomUuid, _ := uuid.NewRandom()
-		users[i].Id = randomUuid
-		users[i].Password = string(hashedPassword)
-		users[i].CreatedAt = time.Now()
-		users[i].UpdatedAt = time.Now()
 	}
 
 	result = database.DB.Create(&users)
@@ -52,10 +56,9 @@ func SeedUsers() error {
 	}
 
 	database.DB.Create(&models.Seeder{
-		Name:      "SeedUsers",
+		Name:      name,
 		CreatedAt: time.Now(),
 	})
 
-	log.Println("SeedUsers executed")
-	return nil
+	log.Println(fmt.Sprint(name) + " executed")
 }

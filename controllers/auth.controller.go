@@ -28,7 +28,7 @@ func Login(ctx *gin.Context) {
 
 	// verify credential
 	var authUser models.User
-	result := database.DB.Unscoped().Select([]string{"id", "email", "password"}).First(&authUser, "email = ?", loginDto.Email)
+	result := database.DB.Select([]string{"id", "email", "password"}).First(&authUser, "email = ?", loginDto.Email)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// for decoy
 		utils.ComparePassword("some password", loginDto.Password)
