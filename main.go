@@ -28,9 +28,9 @@ func main() {
 	}))
 
 	// init routes
+	routes.AuthRoutes(router)
 	routes.RootRoutes(router)
 	routes.UserRoutes(router)
-	routes.AuthRoutes(router)
 
 	// listen on port
 	Port := os.Getenv("PORT")

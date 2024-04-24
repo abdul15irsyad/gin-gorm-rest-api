@@ -1,21 +1,28 @@
 package utils
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
-func GenerateJwt(id uuid.UUID, isRefreshToken bool) (*string, error) {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":             id,
-		"isRefreshToken": isRefreshToken,
-		"jti":            uuid.String(),
+type CustomClaims struct {
+	Id             uuid.UUID `json:"id"`
+	isRefreshToken bool
+	jwt.RegisteredClaims
+}
+
+func GenerateJwt(id uuid.UUID, isRefreshToken bool, exp time.Duration) (*string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
+		Id:             id,
+		isRefreshToken: isRefreshToken,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(exp)),
+		},
 	})
 	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 	tokenString, err := token.SignedString([]byte(jwtSecretKey))
@@ -23,4 +30,25 @@ func GenerateJwt(id uuid.UUID, isRefreshToken bool) (*string, error) {
 		return nil, err
 	}
 	return &tokenString, nil
+}
+
+func ValidateJwt(payload *CustomClaims, tokenString string) error {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		jwtSecretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+		return jwtSecretKey, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok {
+		return err
+	}
+
+	*payload = *claims
+	return nil
 }

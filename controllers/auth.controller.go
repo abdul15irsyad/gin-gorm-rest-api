@@ -56,14 +56,14 @@ func Login(ctx *gin.Context) {
 	}
 
 	// signing jwt
-	accessToken, err := utils.GenerateJwt(authUser.Id, false)
+	accessToken, err := utils.GenerateJwt(authUser.Id, false, 3*time.Hour)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	refreshToken, err := utils.GenerateJwt(authUser.Id, true)
+	refreshToken, err := utils.GenerateJwt(authUser.Id, false, 3*24*time.Hour)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -112,6 +112,14 @@ func Register(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "register",
+		"data":    user,
+	})
+}
+
+func AuthUser(ctx *gin.Context) {
+	user, _ := ctx.Get("authUser")
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "get auth user",
 		"data":    user,
 	})
 }
