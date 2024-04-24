@@ -7,9 +7,6 @@ import (
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -56,20 +53,13 @@ func Login(ctx *gin.Context) {
 	}
 
 	// signing jwt
-	jwtAccessTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_ACCESS_TOKEN_EXPIRED_IN_HOUR"), 64)
-	accessToken, err := utils.GenerateJwt(authUser.Id, "accessToken", time.Duration(jwtAccessTokenExpiredInHour*60*60)*time.Second)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-	jwtRefreshTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_REFRESH_TOKEN_EXPIRED_IN_HOUR"), 64)
-	refreshToken, err := utils.GenerateJwt(authUser.Id, "refreshToken", time.Duration(jwtRefreshTokenExpiredInHour*60*60)*time.Second)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
+	var (
+		accessToken  string
+		refreshToken string
+	)
+
+	ok := utils.SigningToken(ctx, &accessToken, &refreshToken, &authUser)
+	if !ok {
 		return
 	}
 
@@ -78,6 +68,7 @@ func Login(ctx *gin.Context) {
 		"data": gin.H{
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
+			"grantType":    "credential",
 		},
 	})
 }
@@ -122,5 +113,33 @@ func AuthUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get auth user",
 		"data":    user,
+	})
+}
+
+func RefreshToken(ctx *gin.Context) {
+	authUser, ok := utils.GetAuthUserFromAuthorization(ctx, "refresh")
+	if !ok {
+		return
+	}
+
+	// signing jwt
+	// signing jwt
+	var (
+		accessToken  string
+		refreshToken string
+	)
+
+	ok = utils.SigningToken(ctx, &accessToken, &refreshToken, authUser)
+	if !ok {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "refresh",
+		"data": gin.H{
+			"accessToken":  accessToken,
+			"refreshToken": refreshToken,
+			"grantType":    "refresh token",
+		},
 	})
 }

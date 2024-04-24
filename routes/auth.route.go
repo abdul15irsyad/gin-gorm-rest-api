@@ -12,4 +12,5 @@ func AuthRoutes(route *gin.Engine) {
 	AuthRoute.POST("/login", controllers.Login)
 	AuthRoute.POST("/register", controllers.Register)
 	AuthRoute.GET("/user", middlewares.Auth, controllers.AuthUser)
+	AuthRoute.GET("/refresh-token", controllers.RefreshToken)
 }
