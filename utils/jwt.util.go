@@ -10,15 +10,15 @@ import (
 )
 
 type CustomClaims struct {
-	Id             uuid.UUID `json:"id"`
-	isRefreshToken bool
+	Id   uuid.UUID `json:"id"`
+	Type string
 	jwt.RegisteredClaims
 }
 
-func GenerateJwt(id uuid.UUID, isRefreshToken bool, exp time.Duration) (*string, error) {
+func GenerateJwt(id uuid.UUID, tokenType string, exp time.Duration) (*string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
-		Id:             id,
-		isRefreshToken: isRefreshToken,
+		Id:   id,
+		Type: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(exp)),

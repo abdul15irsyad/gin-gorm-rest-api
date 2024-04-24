@@ -63,7 +63,6 @@ func GetUser(ctx *gin.Context) {
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
-			"data":    nil,
 		})
 		return
 	}
@@ -136,7 +135,6 @@ func UpdateUser(ctx *gin.Context) {
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
-			"data":    nil,
 		})
 		return
 	}
@@ -180,7 +178,6 @@ func DeleteUser(ctx *gin.Context) {
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
-			"data":    nil,
 		})
 		return
 	}
@@ -189,6 +186,5 @@ func DeleteUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete user",
-		"data":    nil,
 	})
 }

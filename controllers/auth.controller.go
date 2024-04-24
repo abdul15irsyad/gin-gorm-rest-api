@@ -7,6 +7,8 @@ import (
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,24 +48,24 @@ func Login(ctx *gin.Context) {
 		})
 		return
 	}
-
 	if !correctPassword {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "email or password is incorrect",
-			"data":    nil,
 		})
 		return
 	}
 
 	// signing jwt
-	accessToken, err := utils.GenerateJwt(authUser.Id, false, 3*time.Hour)
+	jwtAccessTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_ACCESS_TOKEN_EXPIRED_IN_HOUR"), 64)
+	accessToken, err := utils.GenerateJwt(authUser.Id, "accessToken", time.Duration(jwtAccessTokenExpiredInHour*60*60)*time.Second)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	refreshToken, err := utils.GenerateJwt(authUser.Id, false, 3*24*time.Hour)
+	jwtRefreshTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_REFRESH_TOKEN_EXPIRED_IN_HOUR"), 64)
+	refreshToken, err := utils.GenerateJwt(authUser.Id, "refreshToken", time.Duration(jwtRefreshTokenExpiredInHour*60*60)*time.Second)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -76,7 +78,6 @@ func Login(ctx *gin.Context) {
 		"data": gin.H{
 			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
-			"createdAt":    time.Now(),
 		},
 	})
 }
