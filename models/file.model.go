@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type File struct {
@@ -25,6 +26,16 @@ func (file *File) AfterLoad() {
 	file.Url = "/assets" + file.Path + "/" + file.Filename
 }
 
+func GetFile(db *gorm.DB, id uuid.UUID) (*File, error) {
+	var file File
+	result := db.Preload(clause.Associations).First(&file, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	file.AfterLoad()
+	return &file, nil
+}
+
 func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File, int, float64, error) {
 	var files []File
 	offset := (page - 1) * limit
@@ -33,7 +44,7 @@ func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File
 	if search != nil && *search != "" {
 		query = query.Where("name ilike ? or email ilike ?", "%"+*search+"%", "%"+*search+"%")
 	}
-	result := query.Limit(limit).Offset(offset).Find(&files)
+	result := query.Limit(limit).Offset(offset).Order("created_at DESC").Find(&files)
 	for i := 0; i < len(files); i++ {
 		files[i].AfterLoad()
 	}

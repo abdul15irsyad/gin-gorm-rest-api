@@ -23,6 +23,16 @@ func (user *User) AfterLoad() {
 	}
 }
 
+func GetUser(db *gorm.DB, id uuid.UUID) (*User, error) {
+	var user User
+	result := db.Preload(clause.Associations).First(&user, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	user.AfterLoad()
+	return &user, nil
+}
+
 func GetPaginatedUsers(db *gorm.DB, page int, limit int, search *string) ([]User, int, float64, error) {
 	var users []User
 	offset := (page - 1) * limit
@@ -31,7 +41,7 @@ func GetPaginatedUsers(db *gorm.DB, page int, limit int, search *string) ([]User
 	if search != nil && *search != "" {
 		query = query.Where("name ilike ? or email ilike ?", "%"+*search+"%", "%"+*search+"%")
 	}
-	result := query.Preload(clause.Associations).Limit(limit).Offset(offset).Find(&users)
+	result := query.Preload(clause.Associations).Limit(limit).Offset(offset).Order("created_at DESC").Find(&users)
 	for i := 0; i < len(users); i++ {
 		users[i].AfterLoad()
 	}

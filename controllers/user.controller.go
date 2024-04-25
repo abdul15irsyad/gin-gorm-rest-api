@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func GetAllUsers(ctx *gin.Context) {
@@ -60,14 +59,14 @@ func GetUser(ctx *gin.Context) {
 
 	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result := database.DB.Preload(clause.Associations).First(&user, "id = ?", id)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	result, err := models.GetUser(database.DB, id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	user.AfterLoad()
+	user = *result
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get user",
@@ -133,13 +132,14 @@ func UpdateUser(ctx *gin.Context) {
 	// save to database
 	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result := database.DB.First(&user, "id = ?", id)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	result, err := models.GetUser(database.DB, id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
+	user = *result
 	user.Name = updateUserDto.Name
 	user.Email = updateUserDto.Email
 	if updateUserDto.Password != nil {
@@ -176,13 +176,14 @@ func DeleteUser(ctx *gin.Context) {
 
 	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result := database.DB.First(&user, "id = ?", id)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	result, err := models.GetUser(database.DB, id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
+	user = *result
 
 	database.DB.Delete(&user)
 

@@ -8,7 +8,9 @@ import (
 )
 
 func FileRoutes(route *gin.Engine) {
-	fileRoute := route.Group("/file", middlewares.Auth)
+	fileRoute := route.Group("/files", middlewares.Auth)
 	fileRoute.GET("/", controllers.GetAllFiles)
+	fileRoute.GET("/:id", controllers.GetFile)
 	fileRoute.POST("/", controllers.CreateFile)
+	fileRoute.DELETE("/:id", controllers.DeleteFile)
 }
