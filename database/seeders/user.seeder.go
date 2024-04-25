@@ -26,8 +26,8 @@ func UserSeeder() {
 		return
 	}
 
-	var files []models.File
-	database.DB.Find(&files)
+	var images []models.File
+	database.DB.Where("filename ilike ?", "%"+"dummy-profile"+"%").Find(&images)
 
 	users := []models.User{}
 	newUuid, _ = uuid.Parse("b0e18329-a7c9-4bea-9efc-72b34818ff14")
@@ -37,20 +37,20 @@ func UserSeeder() {
 		Name:      "irsyad",
 		Email:     "irsyad@email.com",
 		Password:  string(hashedPassword),
-		ImageId:   &files[0].Id,
+		ImageId:   &images[0].Id,
 	})
 	usersLength := len(users)
 	for i := 1; i <= 30-usersLength; i++ {
 		randomUuid, _ := uuid.NewRandom()
 		hashedPassword, _ := utils.HashPassword("Qwerty123")
-		randomFile := *utils.RandomSlice(files)
+		randomFile := *utils.RandomArray(images)
 		user := models.User{
 			BaseModel: models.BaseModel{Id: randomUuid},
 			Name:      "User " + fmt.Sprint(i),
 			Email:     "user" + fmt.Sprint(i) + "@email.com",
 			Password:  string(hashedPassword),
 		}
-		if *utils.RandomSlice([]bool{true, false}) {
+		if *utils.RandomArray([]bool{true, false}) {
 			user.ImageId = &randomFile.Id
 		}
 		users = append(users, user)
