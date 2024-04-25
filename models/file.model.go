@@ -21,7 +21,7 @@ type File struct {
 	Url              string `json:"url" gorm:"-"`
 }
 
-func (file *File) GetUrl() {
+func (file *File) AfterLoad() {
 	file.Url = "/assets" + file.Path + "/" + file.Filename
 }
 
@@ -35,7 +35,7 @@ func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File
 	}
 	result := query.Limit(limit).Offset(offset).Find(&files)
 	for i := 0; i < len(files); i++ {
-		files[i].GetUrl()
+		files[i].AfterLoad()
 	}
 
 	var count int64
@@ -78,7 +78,7 @@ func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.
 		})
 		return nil, false
 	}
-	newFile.GetUrl()
+	newFile.AfterLoad()
 
 	return &newFile, true
 }

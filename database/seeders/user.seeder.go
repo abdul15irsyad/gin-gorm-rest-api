@@ -13,8 +13,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func SeedUsers() {
-	const name = "SeedUsers"
+func UserSeeder() {
+	const name = "UserSeeder"
 	var (
 		seeder         models.Seeder
 		newUuid        uuid.UUID
@@ -26,30 +26,35 @@ func SeedUsers() {
 		return
 	}
 
+	var files []models.File
+	database.DB.Find(&files)
+
+	users := []models.User{}
 	newUuid, _ = uuid.Parse("b0e18329-a7c9-4bea-9efc-72b34818ff14")
 	hashedPassword, _ = utils.HashPassword("Qwerty123")
-	var user1 models.User
-	user1.Id = newUuid
-	user1.Name = "irsyad"
-	user1.Email = "irsyad@email.com"
-	user1.Password = string(hashedPassword)
-
-	users := []models.User{
-		user1,
-	}
+	users = append(users, models.User{
+		BaseModel: models.BaseModel{Id: newUuid},
+		Name:      "irsyad",
+		Email:     "irsyad@email.com",
+		Password:  string(hashedPassword),
+		ImageId:   &files[0].Id,
+	})
 	usersLength := len(users)
 	for i := 1; i <= 30-usersLength; i++ {
 		randomUuid, _ := uuid.NewRandom()
 		hashedPassword, _ := utils.HashPassword("Qwerty123")
+		randomFile := *utils.RandomSlice(files)
 		user := models.User{
 			BaseModel: models.BaseModel{Id: randomUuid},
 			Name:      "User " + fmt.Sprint(i),
 			Email:     "user" + fmt.Sprint(i) + "@email.com",
 			Password:  string(hashedPassword),
 		}
+		if *utils.RandomSlice([]bool{true, false}) {
+			user.ImageId = &randomFile.Id
+		}
 		users = append(users, user)
 	}
-
 	result = database.DB.Create(&users)
 	if result.Error != nil {
 		panic(result.Error)
@@ -59,6 +64,5 @@ func SeedUsers() {
 		Name:      name,
 		CreatedAt: time.Now(),
 	})
-
 	log.Println(fmt.Sprint(name) + " executed")
 }

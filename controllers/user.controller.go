@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func GetAllUsers(ctx *gin.Context) {
@@ -59,13 +60,14 @@ func GetUser(ctx *gin.Context) {
 
 	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result := database.DB.First(&user, "id = ?", id)
+	result := database.DB.Preload(clause.Associations).First(&user, "id = ?", id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
+	user.AfterLoad()
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get user",

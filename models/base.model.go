@@ -9,7 +9,7 @@ import (
 
 type BaseModel struct {
 	Id        uuid.UUID      `json:"id" gorm:"type:uuid;primary_key"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 }

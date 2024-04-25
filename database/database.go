@@ -31,11 +31,11 @@ func InitDatabase() {
 	if err != nil {
 		panic(err.Error())
 	}
-	err = db.AutoMigrate(&models.User{})
+	err = db.AutoMigrate(&models.File{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = db.AutoMigrate(&models.File{})
+	err = db.AutoMigrate(&models.User{})
 	if err != nil {
 		panic(err.Error())
 	}

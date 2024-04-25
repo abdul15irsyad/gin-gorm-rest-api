@@ -3,14 +3,24 @@ package models
 import (
 	"math"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type User struct {
 	BaseModel
-	Name     string `json:"name" gorm:"not null"`
-	Email    string `json:"email" gorm:"not null"`
-	Password string `json:"-" gorm:"select:false;not null"`
+	Name     string     `json:"name" gorm:"not null"`
+	Email    string     `json:"email" gorm:"index;not null"`
+	Password string     `json:"-" gorm:"select:false;not null"`
+	ImageId  *uuid.UUID `json:"-"`
+	Image    *File      `json:"image" gorm:"foreignKey:ImageId"`
+}
+
+func (user *User) AfterLoad() {
+	if user.ImageId != nil {
+		user.Image.AfterLoad()
+	}
 }
 
 func GetPaginatedUsers(db *gorm.DB, page int, limit int, search *string) ([]User, int, float64, error) {
@@ -21,7 +31,10 @@ func GetPaginatedUsers(db *gorm.DB, page int, limit int, search *string) ([]User
 	if search != nil && *search != "" {
 		query = query.Where("name ilike ? or email ilike ?", "%"+*search+"%", "%"+*search+"%")
 	}
-	result := query.Limit(limit).Offset(offset).Find(&users)
+	result := query.Preload(clause.Associations).Limit(limit).Offset(offset).Find(&users)
+	for i := 0; i < len(users); i++ {
+		users[i].AfterLoad()
+	}
 
 	var count int64
 	if err := query.Count(&count).Error; err != nil {

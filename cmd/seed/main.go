@@ -13,7 +13,8 @@ func main() {
 	godotenv.Load(".env")
 	database.InitDatabase()
 
-	seeders.SeedUsers()
+	seeders.FileSeeder()
+	seeders.UserSeeder()
 	log.Println("all seeders executed")
 
 	os.Exit(0)
