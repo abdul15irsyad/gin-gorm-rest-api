@@ -15,12 +15,12 @@ import (
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("error loading `.env` file: " + fmt.Sprint(err))
+		log.Fatal("error loading `.env` file: " + err.Error())
 	}
-	router := gin.Default()
-
 	database.InitDatabase()
 
+	router := gin.Default()
+	router.MaxMultipartMemory = 8 << 20
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:  []string{"*"},
 		AllowMethods:  []string{"*"},
@@ -34,6 +34,7 @@ func main() {
 	routes.AuthRoutes(router)
 	routes.RootRoutes(router)
 	routes.UserRoutes(router)
+	routes.FileRoutes(router)
 
 	// listen on port
 	Port := os.Getenv("PORT")

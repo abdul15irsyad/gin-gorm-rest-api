@@ -8,10 +8,10 @@ import (
 )
 
 func UserRoutes(route *gin.Engine) {
-	UserRoute := route.Group("/users", middlewares.Auth)
-	UserRoute.GET("/", controllers.GetAllUser)
-	UserRoute.GET("/:id", controllers.GetUser)
-	UserRoute.POST("/", controllers.CreateUser)
-	UserRoute.PATCH("/:id", controllers.UpdateUser)
-	UserRoute.DELETE("/:id", controllers.DeleteUser)
+	userRoute := route.Group("/users", middlewares.Auth)
+	userRoute.GET("/", controllers.GetAllUsers)
+	userRoute.GET("/:id", controllers.GetUser)
+	userRoute.POST("/", controllers.CreateUser)
+	userRoute.PATCH("/:id", controllers.UpdateUser)
+	userRoute.DELETE("/:id", controllers.DeleteUser)
 }

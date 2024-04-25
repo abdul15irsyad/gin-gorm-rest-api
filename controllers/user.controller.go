@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAllUser(ctx *gin.Context) {
+func GetAllUsers(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1

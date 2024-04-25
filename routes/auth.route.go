@@ -8,9 +8,9 @@ import (
 )
 
 func AuthRoutes(route *gin.Engine) {
-	AuthRoute := route.Group("/auth")
-	AuthRoute.POST("/login", controllers.Login)
-	AuthRoute.POST("/register", controllers.Register)
-	AuthRoute.GET("/user", middlewares.Auth, controllers.AuthUser)
-	AuthRoute.GET("/refresh-token", controllers.RefreshToken)
+	authRoute := route.Group("/auth")
+	authRoute.POST("/login", controllers.Login)
+	authRoute.POST("/register", controllers.Register)
+	authRoute.GET("/user", middlewares.Auth, controllers.AuthUser)
+	authRoute.GET("/refresh-token", controllers.RefreshToken)
 }

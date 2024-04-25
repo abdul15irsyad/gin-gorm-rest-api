@@ -77,6 +77,12 @@ func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (user *mod
 			})
 			return nil, false
 		}
+		if errors.Is(err, jwt.ErrSignatureInvalid) {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": "invalid credential",
+			})
+			return nil, false
+		}
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
@@ -85,7 +91,7 @@ func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (user *mod
 
 	if (*payload).Type != tokenType {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": "token is not " + fmt.Sprint(tokenType),
+			"message": "token is not " + tokenType,
 		})
 		return nil, false
 	}

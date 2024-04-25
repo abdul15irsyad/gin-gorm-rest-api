@@ -27,11 +27,15 @@ func InitDatabase() {
 		log.Println("database connected")
 	}
 
+	err = db.AutoMigrate(&models.Seeder{})
+	if err != nil {
+		panic(err.Error())
+	}
 	err = db.AutoMigrate(&models.User{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = db.AutoMigrate(&models.Seeder{})
+	err = db.AutoMigrate(&models.File{})
 	if err != nil {
 		panic(err.Error())
 	}
