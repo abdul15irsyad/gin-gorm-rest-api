@@ -28,6 +28,7 @@ func main() {
 		AllowWildcard: true,
 	}))
 	router.SetTrustedProxies([]string{})
+	router.Static("/assets", "./assets")
 
 	// init routes
 	routes.AuthRoutes(router)
