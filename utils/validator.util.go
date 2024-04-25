@@ -5,9 +5,10 @@ import (
 )
 
 type ErrorResponse struct {
-	Field string      `json:"field"`
-	Tag   string      `json:"tag"`
-	Value interface{} `json:"value"`
+	Field   string      `json:"field"`
+	Message string      `json:"message"`
+	Tag     string      `json:"tag"`
+	Value   interface{} `json:"value"`
 }
 
 func Validate(dto interface{}) []*ErrorResponse {
@@ -17,9 +18,10 @@ func Validate(dto interface{}) []*ErrorResponse {
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			errorResponse := ErrorResponse{
-				Field: err.Field(),
-				Tag:   err.Tag(),
-				Value: err.Value(),
+				Field:   err.Field(),
+				Tag:     err.Tag(),
+				Value:   err.Value(),
+				Message: err.Error(),
 			}
 			errors = append(errors, &errorResponse)
 		}
