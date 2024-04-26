@@ -26,14 +26,14 @@ func (file *File) AfterLoad() {
 	file.Url = "/assets" + file.Path + "/" + file.Filename
 }
 
-func GetFile(db *gorm.DB, id uuid.UUID) (*File, error) {
+func GetFile(db *gorm.DB, id uuid.UUID) (File, error) {
 	var file File
 	result := db.Preload(clause.Associations).First(&file, "id = ?", id)
 	if result.Error != nil {
-		return nil, result.Error
+		return File{}, result.Error
 	}
 	file.AfterLoad()
-	return &file, nil
+	return file, nil
 }
 
 func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File, int, float64, error) {
@@ -42,7 +42,7 @@ func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File
 
 	query := db.Model(&File{})
 	if search != nil && *search != "" {
-		query = query.Where("name ilike ? or email ilike ?", "%"+*search+"%", "%"+*search+"%")
+		query = query.Where("filename ILIKE ? OR original_filename ILIKE ? OR mime ILIKE ?", "%"+*search+"%", "%"+*search+"%", "%"+*search+"%")
 	}
 	result := query.Limit(limit).Offset(offset).Order("created_at DESC").Find(&files)
 	for i := 0; i < len(files); i++ {
@@ -51,21 +51,21 @@ func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]File
 
 	var count int64
 	if err := query.Count(&count).Error; err != nil {
-		return nil, 0, 0, err
+		return []File{}, 0, 0, err
 	}
 	totalPages := math.Ceil(float64(count) / float64(limit))
 
 	return files, int(count), totalPages, result.Error
 }
 
-func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.DB) (*File, bool) {
+func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.DB) (File, bool) {
 	filename := fmt.Sprint(time.Now().UnixMicro()) + "-" + file.Filename
 	err := ctx.SaveUploadedFile(file, "./assets/uploads/"+filename)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
-		return nil, false
+		return File{}, false
 	}
 	mime := file.Header.Get("Content-Type")
 	randomUuid, err := uuid.NewRandom()
@@ -73,7 +73,7 @@ func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
-		return nil, false
+		return File{}, false
 	}
 	newFile := File{
 		BaseModel:        BaseModel{Id: randomUuid},
@@ -87,9 +87,9 @@ func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
 		})
-		return nil, false
+		return File{}, false
 	}
 	newFile.AfterLoad()
 
-	return &newFile, true
+	return newFile, true
 }

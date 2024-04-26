@@ -53,12 +53,7 @@ func Login(ctx *gin.Context) {
 	}
 
 	// signing jwt
-	var (
-		accessToken  string
-		refreshToken string
-	)
-
-	ok := utils.SigningToken(ctx, &accessToken, &refreshToken, &authUser)
+	accessToken, refreshToken, ok := utils.SigningToken(ctx, authUser)
 	if !ok {
 		return
 	}
@@ -123,13 +118,7 @@ func RefreshToken(ctx *gin.Context) {
 	}
 
 	// signing jwt
-	// signing jwt
-	var (
-		accessToken  string
-		refreshToken string
-	)
-
-	ok = utils.SigningToken(ctx, &accessToken, &refreshToken, authUser)
+	accessToken, refreshToken, ok := utils.SigningToken(ctx, authUser)
 	if !ok {
 		return
 	}

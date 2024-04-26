@@ -22,7 +22,7 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJwt(id uuid.UUID, tokenType string, exp time.Duration) (*string, error) {
+func GenerateJwt(id uuid.UUID, tokenType string, exp time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
 		Id:   id,
 		Type: tokenType,
@@ -34,12 +34,12 @@ func GenerateJwt(id uuid.UUID, tokenType string, exp time.Duration) (*string, er
 	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 	tokenString, err := token.SignedString([]byte(jwtSecretKey))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return &tokenString, nil
+	return tokenString, nil
 }
 
-func ValidateJwt(tokenString string) (*CustomClaims, error) {
+func ValidateJwt(tokenString string) (CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -48,24 +48,24 @@ func ValidateJwt(tokenString string) (*CustomClaims, error) {
 		return jwtSecretKey, nil
 	})
 	if err != nil {
-		return nil, err
+		return CustomClaims{}, err
 	}
 
-	claims, ok := token.Claims.(*CustomClaims)
+	claims, ok := token.Claims.(CustomClaims)
 	if !ok {
-		return nil, err
+		return CustomClaims{}, err
 	}
 
 	return claims, nil
 }
 
-func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (user *models.User, ok bool) {
+func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (models.User, bool) {
 	authorization := ctx.GetHeader("Authorization")
 	if authorization == "" {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": "invalid credential",
 		})
-		return nil, false
+		return models.User{}, false
 	}
 	accessToken := strings.Split(authorization, " ")[1]
 	payload, err := ValidateJwt(accessToken)
@@ -75,58 +75,56 @@ func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (user *mod
 				"code":    "TOKEN_EXPIRED",
 				"message": "token expired",
 			})
-			return nil, false
+			return models.User{}, false
 		}
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": "invalid credential",
 			})
-			return nil, false
+			return models.User{}, false
 		}
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
-		return nil, false
+		return models.User{}, false
 	}
 
-	if (*payload).Type != tokenType {
+	if payload.Type != tokenType {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "token is not " + tokenType,
 		})
-		return nil, false
+		return models.User{}, false
 	}
 
 	// check to database
 	var authUser models.User
-	result := database.DB.Where("id = ?", (*payload).Id).First(&authUser)
+	result := database.DB.Where("id = ?", payload.Id).First(&authUser)
 	if result.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "invalid credential",
 		})
-		return nil, false
+		return models.User{}, false
 	}
-	return &authUser, true
+	return authUser, true
 }
 
-func SigningToken(ctx *gin.Context, accessToken *string, refreshToken *string, authUser *models.User) (ok bool) {
+func SigningToken(ctx *gin.Context, authUser models.User) (accessToken string, refreshToken string, ok bool) {
 	// signing jwt
 	jwtAccessTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_ACCESS_TOKEN_EXPIRED_IN_HOUR"), 64)
-	token, err := GenerateJwt((*authUser).Id, "access", time.Duration(jwtAccessTokenExpiredInHour*60*60)*time.Second)
+	accessToken, err := GenerateJwt(authUser.Id, "access", time.Duration(jwtAccessTokenExpiredInHour*60*60)*time.Second)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
-		return false
+		return "", "", false
 	}
-	*accessToken = *token
 	jwtRefreshTokenExpiredInHour, _ := strconv.ParseFloat(os.Getenv("JWT_REFRESH_TOKEN_EXPIRED_IN_HOUR"), 64)
-	token, err = GenerateJwt((*authUser).Id, "refresh", time.Duration(jwtRefreshTokenExpiredInHour*60*60)*time.Second)
+	refreshToken, err = GenerateJwt(authUser.Id, "refresh", time.Duration(jwtRefreshTokenExpiredInHour*60*60)*time.Second)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
-		return false
+		return "", "", false
 	}
-	*refreshToken = *token
-	return true
+	return accessToken, refreshToken, true
 }

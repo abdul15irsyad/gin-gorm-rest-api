@@ -13,6 +13,6 @@ func Auth(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set("authUser", *authUser)
+	ctx.Set("authUser", authUser)
 	ctx.Next()
 }

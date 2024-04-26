@@ -28,16 +28,14 @@ func GetFile(ctx *gin.Context) {
 		return
 	}
 
-	var file models.File
 	id, _ := uuid.Parse(paramId)
-	result, err := models.GetFile(database.DB, id)
+	file, err := models.GetFile(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	file = *result
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get file",
@@ -96,7 +94,7 @@ func CreateFile(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create file",
-		"data":    *newFile,
+		"data":    newFile,
 	})
 }
 
@@ -114,16 +112,14 @@ func DeleteFile(ctx *gin.Context) {
 		return
 	}
 
-	var file models.File
 	id, _ := uuid.Parse(paramId)
-	result, err := models.GetFile(database.DB, id)
+	file, err := models.GetFile(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	file = *result
 
 	database.DB.Delete(&file)
 

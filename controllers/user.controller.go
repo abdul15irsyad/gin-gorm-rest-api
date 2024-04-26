@@ -57,16 +57,14 @@ func GetUser(ctx *gin.Context) {
 		return
 	}
 
-	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result, err := models.GetUser(database.DB, id)
+	user, err := models.GetUser(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	user = *result
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "get user",
@@ -130,16 +128,14 @@ func UpdateUser(ctx *gin.Context) {
 	}
 
 	// save to database
-	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result, err := models.GetUser(database.DB, id)
+	user, err := models.GetUser(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	user = *result
 	user.Name = updateUserDto.Name
 	user.Email = updateUserDto.Email
 	if updateUserDto.Password != nil {
@@ -174,16 +170,14 @@ func DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	var user models.User
 	id, _ := uuid.Parse(paramId)
-	result, err := models.GetUser(database.DB, id)
+	user, err := models.GetUser(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
 		})
 		return
 	}
-	user = *result
 
 	database.DB.Delete(&user)
 
