@@ -89,11 +89,13 @@ func Register(ctx *gin.Context) {
 		})
 		return
 	}
+	userRoleId, _ := uuid.Parse("3ed4e622-4642-499a-b711-fb86a458f098")
 	user := models.User{
 		BaseModel: models.BaseModel{Id: randomUuid},
 		Name:      registerDto.Name,
 		Email:     registerDto.Email,
 		Password:  string(hashedPassword),
+		RoleId:    userRoleId,
 	}
 	database.DB.Save(&user)
 

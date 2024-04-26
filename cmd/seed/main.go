@@ -14,6 +14,7 @@ func main() {
 	database.InitDatabase()
 
 	seeders.FileSeeder()
+	seeders.RoleSeeder()
 	seeders.UserSeeder()
 	log.Println("all seeders executed")
 

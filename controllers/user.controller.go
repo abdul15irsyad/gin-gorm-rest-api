@@ -99,13 +99,16 @@ func CreateUser(ctx *gin.Context) {
 		})
 		return
 	}
+	roleId, _ := uuid.Parse(createUserDto.RoleId)
 	user := models.User{
 		BaseModel: models.BaseModel{Id: randomUuid},
 		Name:      createUserDto.Name,
 		Email:     createUserDto.Email,
 		Password:  string(hashedPassword),
+		RoleId:    roleId,
 	}
 	database.DB.Save(&user)
+	user, _ = models.GetUser(database.DB, user.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create user",
@@ -138,6 +141,8 @@ func UpdateUser(ctx *gin.Context) {
 	}
 	user.Name = updateUserDto.Name
 	user.Email = updateUserDto.Email
+	roleId, _ := uuid.Parse(updateUserDto.RoleId)
+	user.RoleId = roleId
 	if updateUserDto.Password != nil {
 		hashedPassword, err := utils.HashPassword(*updateUserDto.Password)
 		if err != nil {
@@ -149,6 +154,7 @@ func UpdateUser(ctx *gin.Context) {
 		user.Password = string(hashedPassword)
 	}
 	database.DB.Save(&user)
+	user, _ = models.GetUser(database.DB, user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update user",

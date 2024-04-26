@@ -27,17 +27,18 @@ func InitDatabase() {
 		log.Println("database connected")
 	}
 
-	err = db.AutoMigrate(&models.Seeder{})
-	if err != nil {
-		panic(err.Error())
+	// auto migrate table
+	allModels := []interface{}{
+		models.Seeder{},
+		models.File{},
+		models.Role{},
+		models.User{},
 	}
-	err = db.AutoMigrate(&models.File{})
-	if err != nil {
-		panic(err.Error())
-	}
-	err = db.AutoMigrate(&models.User{})
-	if err != nil {
-		panic(err.Error())
+	for _, model := range allModels {
+		err = db.AutoMigrate(&model)
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 
 	DB = db

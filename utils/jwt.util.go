@@ -51,12 +51,12 @@ func ValidateJwt(tokenString string) (CustomClaims, error) {
 		return CustomClaims{}, err
 	}
 
-	claims, ok := token.Claims.(CustomClaims)
+	claims, ok := token.Claims.(*CustomClaims)
 	if !ok {
 		return CustomClaims{}, err
 	}
 
-	return claims, nil
+	return *claims, nil
 }
 
 func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (models.User, bool) {
@@ -91,15 +91,14 @@ func GetAuthUserFromAuthorization(ctx *gin.Context, tokenType string) (models.Us
 
 	if payload.Type != tokenType {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": "token is not " + tokenType,
+			"message": "token is not " + tokenType + " token",
 		})
 		return models.User{}, false
 	}
 
 	// check to database
-	var authUser models.User
-	result := database.DB.Where("id = ?", payload.Id).First(&authUser)
-	if result.Error != nil {
+	authUser, err := models.GetUser(database.DB, payload.Id)
+	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "invalid credential",
 		})

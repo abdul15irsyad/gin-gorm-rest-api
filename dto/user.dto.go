@@ -5,6 +5,7 @@ type CreateUserDto struct {
 	Email           string `json:"email" form:"email" validate:"required,email"`
 	Password        string `json:"password" form:"password" validate:"required,min=8"`
 	ConfirmPassword string `json:"confirmPassword" form:"confirmPassword" validate:"required,eqfield=Password"`
+	RoleId          string `json:"roleId" form:"roleId" validate:"uuid"`
 }
 
 type UpdateUserDto struct {
@@ -13,6 +14,7 @@ type UpdateUserDto struct {
 	Email           string  `json:"email" form:"email" validate:"required,email"`
 	Password        *string `json:"password" form:"password" validate:"omitempty,min=8"`
 	ConfirmPassword *string `json:"confirmPassword" form:"confirmPassword" validate:"required_with=Password,eqfield=Password"`
+	RoleId          string  `json:"roleId" form:"roleId" validate:"uuid"`
 }
 
 type GetUserDto struct {

@@ -13,8 +13,10 @@ type User struct {
 	Name     string     `json:"name" gorm:"not null"`
 	Email    string     `json:"email" gorm:"index;not null"`
 	Password string     `json:"-" gorm:"select:false;not null"`
+	RoleId   uuid.UUID  `json:"-" gorm:"not null"`
+	Role     Role       `json:"role" gorm:"foreignKey:RoleId;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	ImageId  *uuid.UUID `json:"-"`
-	Image    *File      `json:"image" gorm:"foreignKey:ImageId"`
+	Image    *File      `json:"image" gorm:"foreignKey:ImageId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 func (user *User) AfterLoad() {

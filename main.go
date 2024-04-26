@@ -34,6 +34,7 @@ func main() {
 	routes.AuthRoutes(router)
 	routes.RootRoutes(router)
 	routes.UserRoutes(router)
+	routes.RoleRoutes(router)
 	routes.FileRoutes(router)
 
 	// listen on port
