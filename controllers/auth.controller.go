@@ -33,7 +33,6 @@ func Login(ctx *gin.Context) {
 		utils.ComparePassword("some password", loginDto.Password)
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "email or password is incorrect",
-			"data":    nil,
 		})
 		return
 	}
@@ -105,14 +104,6 @@ func Register(ctx *gin.Context) {
 	})
 }
 
-func AuthUser(ctx *gin.Context) {
-	user, _ := ctx.Get("authUser")
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "get auth user",
-		"data":    user,
-	})
-}
-
 func RefreshToken(ctx *gin.Context) {
 	authUser, ok := utils.GetAuthUserFromAuthorization(ctx, "refresh")
 	if !ok {
@@ -132,5 +123,81 @@ func RefreshToken(ctx *gin.Context) {
 			"refreshToken": refreshToken,
 			"grantType":    "refresh token",
 		},
+	})
+}
+
+func AuthUser(ctx *gin.Context) {
+	authUser, _ := ctx.Get("authUser")
+	user := authUser.(models.User)
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "get auth user",
+		"data":    user,
+	})
+}
+
+func UpdateAuthUser(ctx *gin.Context) {
+	var updateAuthUserDto dto.UpdateAuthUserDto
+	ctx.ShouldBind(&updateAuthUserDto)
+	validationErrors := utils.Validate(updateAuthUserDto)
+	if validationErrors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  validationErrors,
+		})
+		return
+	}
+
+	authUser, _ := ctx.Get("authUser")
+	user := authUser.(models.User)
+	user.Name = updateAuthUserDto.Name
+	user.Email = updateAuthUserDto.Email
+	database.DB.Save(&user)
+	user, _ = models.GetUser(database.DB, user.Id)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "update auth user",
+		"data":    user,
+	})
+}
+
+func UpdateAuthUserPassword(ctx *gin.Context) {
+	var updateAuthUserPasswordDto dto.UpdateAuthUserPasswordDto
+	ctx.ShouldBind(&updateAuthUserPasswordDto)
+	validationErrors := utils.Validate(updateAuthUserPasswordDto)
+	if validationErrors != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  validationErrors,
+		})
+		return
+	}
+
+	authUser, _ := ctx.Get("authUser")
+	user := authUser.(models.User)
+	correctPassword, err := utils.ComparePassword(user.Password, updateAuthUserPasswordDto.Password)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	if !correctPassword {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "password is incorrect",
+		})
+		return
+	}
+	hashedPassword, err := utils.HashPassword(updateAuthUserPasswordDto.NewPassword)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	user.Password = string(hashedPassword)
+	database.DB.Save(&user)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "update auth user password",
 	})
 }
