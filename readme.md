@@ -32,7 +32,7 @@ project for learning golang with gin framework and gorm as ORM
    go run main.go
    ```
 
-   or with air (live reload)
+   or with [air](https://github.com/cosmtrek/air) (live reload)
 
    ```bash
    air
