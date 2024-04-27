@@ -15,18 +15,19 @@ import (
 
 func RoleSeeder() {
 	// check seeder
-	const name = "RoleSeeder"
+	const seederName = "RoleSeeder"
 	var (
 		seeder models.Seeder
 	)
-	result := database.DB.Where("name = ?", name).First(&seeder)
+	result := database.DB.Where("name = ?", seederName).First(&seeder)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		log.Println(fmt.Sprint(seederName), "already executed")
 		return
 	}
 
 	// seeder data
 	roles := []models.Role{}
-	newUuid, _ := uuid.Parse("b0e18329-a7c9-4bea-9efc-72b34818ff14")
+	newUuid, _ := uuid.Parse("92833737-af8f-4af2-993d-74ec5b235109")
 	role := models.Role{
 		BaseModel: models.BaseModel{Id: newUuid},
 		Name:      "Administrator",
@@ -50,8 +51,8 @@ func RoleSeeder() {
 
 	// add to seeder table
 	database.DB.Create(&models.Seeder{
-		Name:      name,
+		Name:      seederName,
 		CreatedAt: time.Now(),
 	})
-	log.Println(fmt.Sprint(name) + " executed")
+	log.Println(fmt.Sprint(seederName) + " executed")
 }

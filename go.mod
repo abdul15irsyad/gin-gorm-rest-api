@@ -14,6 +14,8 @@ require (
 	gorm.io/gorm v1.25.5
 )
 
+require github.com/go-faker/faker/v4 v4.4.1 // indirect
+
 require (
 	github.com/bytedance/sonic v1.10.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect

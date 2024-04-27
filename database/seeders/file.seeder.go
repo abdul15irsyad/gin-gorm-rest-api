@@ -14,13 +14,14 @@ import (
 
 func FileSeeder() {
 	// check seeder
-	const name = "FileSeeder"
+	const seederName = "FileSeeder"
 	var (
 		seeder  models.Seeder
 		newUuid uuid.UUID
 	)
-	result := database.DB.Where("name = ?", name).First(&seeder)
+	result := database.DB.Where("name = ?", seederName).First(&seeder)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		log.Println(fmt.Sprint(seederName), "already executed")
 		return
 	}
 
@@ -47,8 +48,8 @@ func FileSeeder() {
 
 	// add to seeder table
 	database.DB.Create(&models.Seeder{
-		Name:      name,
+		Name:      seederName,
 		CreatedAt: time.Now(),
 	})
-	log.Println(fmt.Sprint(name) + " executed")
+	log.Println(fmt.Sprint(seederName) + " executed")
 }
