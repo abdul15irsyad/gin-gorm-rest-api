@@ -38,6 +38,12 @@ project for learning golang with gin framework and gorm as ORM
    air
    ```
 
+5. run the seeder for dummy datas
+
+   ```bash
+   go run cmd/seed/main.go
+   ```
+
 ## Postman
 
 [<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://app.getpostman.com/run-collection/6292564-55c171e1-8b56-4b55-a1f8-bd97378281c1?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D6292564-55c171e1-8b56-4b55-a1f8-bd97378281c1%26entityType%3Dcollection%26workspaceId%3De14a18ea-da74-4b90-b978-d57d03cd3ded#?env%5Bgin%20gorm%20local%5D=W3sia2V5IjoiYmFzZV91cmwiLCJ2YWx1ZSI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMSIsImVuYWJsZWQiOnRydWUsInR5cGUiOiJkZWZhdWx0Iiwic2Vzc2lvblZhbHVlIjoiaHR0cDovL2xvY2FsaG9zdDozMDAxIiwic2Vzc2lvbkluZGV4IjowfV0=)
