@@ -23,7 +23,9 @@ type File struct {
 }
 
 func (file *File) AfterLoad() {
-	file.Url = "/assets" + file.Path + "/" + file.Filename
+	if file != nil {
+		file.Url = "/assets" + file.Path + "/" + file.Filename
+	}
 }
 
 func GetFile(db *gorm.DB, id uuid.UUID) (File, error) {

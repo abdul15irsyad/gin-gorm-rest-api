@@ -20,8 +20,10 @@ type User struct {
 }
 
 func (user *User) AfterLoad() {
-	if user.ImageId != nil {
-		user.Image.AfterLoad()
+	if user != nil {
+		if user.ImageId != nil {
+			user.Image.AfterLoad()
+		}
 	}
 }
 
