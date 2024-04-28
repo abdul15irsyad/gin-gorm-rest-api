@@ -32,9 +32,10 @@ func UserSeeder() {
 	var images []models.File
 	database.DB.Where("filename ILIKE ?", "%"+"dummy-profile"+"%").Find(&images)
 	users := []models.User{}
+	administratorRoleId, _ := uuid.Parse("92833737-af8f-4af2-993d-74ec5b235109")
+	userRoleId, _ := uuid.Parse("3ed4e622-4642-499a-b711-fb86a458f098")
 	newUuid, _ := uuid.Parse("b0e18329-a7c9-4bea-9efc-72b34818ff14")
 	hashedPassword, _ := utils.HashPassword("Qwerty123")
-	administratorRoleId, _ := uuid.Parse("92833737-af8f-4af2-993d-74ec5b235109")
 	user := models.User{
 		BaseModel: models.BaseModel{Id: newUuid},
 		Name:      "irsyad",
@@ -44,8 +45,18 @@ func UserSeeder() {
 		RoleId:    administratorRoleId,
 	}
 	users = append(users, user)
+	newUuid, _ = uuid.Parse("0e3cec4a-206c-4dfb-96f6-3f6b85db9543")
+	hashedPassword, _ = utils.HashPassword("Qwerty123")
+	user = models.User{
+		BaseModel: models.BaseModel{Id: newUuid},
+		Name:      "abdul",
+		Email:     "abdul@email.com",
+		Password:  string(hashedPassword),
+		ImageId:   &images[2].Id,
+		RoleId:    userRoleId,
+	}
+	users = append(users, user)
 	usersLength := len(users)
-	userRoleId, _ := uuid.Parse("3ed4e622-4642-499a-b711-fb86a458f098")
 	for i := 0; i < 30-usersLength; i++ {
 		randomUuid, _ := uuid.NewRandom()
 		hashedPassword, _ := utils.HashPassword("Qwerty123")

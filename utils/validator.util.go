@@ -11,9 +11,9 @@ type ErrorResponse struct {
 	Value   interface{} `json:"value"`
 }
 
-func Validate(dto interface{}) []*ErrorResponse {
+func Validate(dto interface{}) []ErrorResponse {
 	var validate = validator.New(validator.WithRequiredStructEnabled())
-	var errors []*ErrorResponse
+	errors := []ErrorResponse{}
 	err := validate.Struct(dto)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
@@ -23,7 +23,7 @@ func Validate(dto interface{}) []*ErrorResponse {
 				Value:   err.Value(),
 				Message: err.Error(),
 			}
-			errors = append(errors, &errorResponse)
+			errors = append(errors, errorResponse)
 		}
 	}
 	return errors

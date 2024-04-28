@@ -11,7 +11,7 @@ import (
 type User struct {
 	BaseModel
 	Name     string     `json:"name" gorm:"not null"`
-	Email    string     `json:"email" gorm:"index;not null"`
+	Email    string     `json:"email" gorm:"not null;uniqueIndex:idx_users_email,where:deleted_at IS NULL"`
 	Password string     `json:"-" gorm:"select:false;not null"`
 	RoleId   uuid.UUID  `json:"-" gorm:"not null"`
 	Role     Role       `json:"role" gorm:"foreignKey:RoleId;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
@@ -28,6 +28,20 @@ func (user *User) AfterLoad() {
 func GetUser(db *gorm.DB, id uuid.UUID) (User, error) {
 	var user User
 	result := db.Preload(clause.Associations).First(&user, "id = ?", id)
+	if result.Error != nil {
+		return User{}, result.Error
+	}
+	user.AfterLoad()
+	return user, nil
+}
+
+func GetUserByField(db *gorm.DB, field string, value string, excludeId *string) (User, error) {
+	var user User
+	query := db.Preload(clause.Associations).Where(field+" = ?", value)
+	if excludeId != nil {
+		query = query.Where("id != ?", *excludeId)
+	}
+	result := query.First(&user)
 	if result.Error != nil {
 		return User{}, result.Error
 	}

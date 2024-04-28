@@ -20,7 +20,7 @@ func GetFile(ctx *gin.Context) {
 	ctx.ShouldBind(&getFileDto)
 	getFileDto.Id = paramId
 	validationErrors := utils.Validate(getFileDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -104,7 +104,7 @@ func DeleteFile(ctx *gin.Context) {
 	ctx.ShouldBind(&getFileDto)
 	getFileDto.Id = paramId
 	validationErrors := utils.Validate(getFileDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,

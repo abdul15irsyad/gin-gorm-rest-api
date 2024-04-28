@@ -41,7 +41,7 @@ project for learning golang with gin framework and gorm as ORM
 5. run the seeder for dummy datas
 
    ```bash
-   go run cmd/seed/main.go
+   go run cmd/seed.go
    ```
 
 ## Postman

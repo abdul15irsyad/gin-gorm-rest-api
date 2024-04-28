@@ -49,7 +49,7 @@ func GetUser(ctx *gin.Context) {
 	ctx.ShouldBind(&getUserDto)
 	getUserDto.Id = paramId
 	validationErrors := utils.Validate(getUserDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -76,7 +76,25 @@ func CreateUser(ctx *gin.Context) {
 	var createUserDto dto.CreateUserDto
 	ctx.ShouldBind(&createUserDto)
 	validationErrors := utils.Validate(createUserDto)
-	if validationErrors != nil {
+	// check is email unique in database
+	emailErrorExists := false
+	for _, validationError := range validationErrors {
+		if validationError.Field == "Email" {
+			emailErrorExists = true
+		}
+	}
+	if !emailErrorExists {
+		_, err := models.GetUserByField(database.DB, "email", createUserDto.Email, nil)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			validationErrors = append(validationErrors, utils.ErrorResponse{
+				Field:   "Email",
+				Message: "Key: 'CreateUserDto.Email' Error:Field validation for 'Email' failed on the 'unique' tag",
+				Tag:     "unique",
+				Value:   createUserDto.Email,
+			})
+		}
+	}
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -107,7 +125,13 @@ func CreateUser(ctx *gin.Context) {
 		Password:  string(hashedPassword),
 		RoleId:    roleId,
 	}
-	database.DB.Save(&user)
+	result := database.DB.Save(&user)
+	if result.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": result.Error.Error(),
+		})
+		return
+	}
 	user, _ = models.GetUser(database.DB, user.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
@@ -122,7 +146,25 @@ func UpdateUser(ctx *gin.Context) {
 	ctx.ShouldBind(&updateUserDto)
 	updateUserDto.Id = paramId
 	validationErrors := utils.Validate(updateUserDto)
-	if validationErrors != nil {
+	// check is email unique in database
+	emailErrorExists := false
+	for _, validationError := range validationErrors {
+		if validationError.Field == "Email" {
+			emailErrorExists = true
+		}
+	}
+	if !emailErrorExists {
+		_, err := models.GetUserByField(database.DB, "email", updateUserDto.Email, &updateUserDto.Id)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			validationErrors = append(validationErrors, utils.ErrorResponse{
+				Field:   "Email",
+				Message: "Key: 'UpdateUserDto.Email' Error:Field validation for 'Email' failed on the 'unique' tag",
+				Tag:     "unique",
+				Value:   updateUserDto.Email,
+			})
+		}
+	}
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -168,7 +210,7 @@ func DeleteUser(ctx *gin.Context) {
 	ctx.ShouldBind(&getUserDto)
 	getUserDto.Id = paramId
 	validationErrors := utils.Validate(getUserDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,

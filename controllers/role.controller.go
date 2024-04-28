@@ -50,7 +50,7 @@ func GetRole(ctx *gin.Context) {
 	ctx.ShouldBind(&getRoleDto)
 	getRoleDto.Id = paramId
 	validationErrors := utils.Validate(getRoleDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -77,7 +77,7 @@ func CreateRole(ctx *gin.Context) {
 	var createRoleDto dto.CreateRoleDto
 	ctx.ShouldBind(&createRoleDto)
 	validationErrors := utils.Validate(createRoleDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -114,7 +114,7 @@ func UpdateRole(ctx *gin.Context) {
 	ctx.ShouldBind(&updateRoleDto)
 	updateRoleDto.Id = paramId
 	validationErrors := utils.Validate(updateRoleDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -149,7 +149,7 @@ func DeleteRole(ctx *gin.Context) {
 	ctx.ShouldBind(&getRoleDto)
 	getRoleDto.Id = paramId
 	validationErrors := utils.Validate(getRoleDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,

@@ -17,7 +17,7 @@ func Login(ctx *gin.Context) {
 	var loginDto dto.LoginDto
 	ctx.ShouldBind(&loginDto)
 	validationErrors := utils.Validate(loginDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -27,7 +27,7 @@ func Login(ctx *gin.Context) {
 
 	// verify credential
 	var authUser models.User
-	result := database.DB.Select([]string{"id", "email", "password"}).First(&authUser, "email = ?", loginDto.Email)
+	result := database.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// for decoy
 		utils.ComparePassword("some password", loginDto.Password)
@@ -71,7 +71,7 @@ func Register(ctx *gin.Context) {
 	var registerDto dto.RegisterDto
 	ctx.ShouldBind(&registerDto)
 	validationErrors := utils.Validate(registerDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -139,7 +139,7 @@ func UpdateAuthUser(ctx *gin.Context) {
 	var updateAuthUserDto dto.UpdateAuthUserDto
 	ctx.ShouldBind(&updateAuthUserDto)
 	validationErrors := utils.Validate(updateAuthUserDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
@@ -164,7 +164,7 @@ func UpdateAuthUserPassword(ctx *gin.Context) {
 	var updateAuthUserPasswordDto dto.UpdateAuthUserPasswordDto
 	ctx.ShouldBind(&updateAuthUserPasswordDto)
 	validationErrors := utils.Validate(updateAuthUserPasswordDto)
-	if validationErrors != nil {
+	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
 			"errors":  validationErrors,
