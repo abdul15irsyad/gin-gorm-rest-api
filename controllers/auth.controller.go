@@ -7,6 +7,8 @@ import (
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -126,19 +128,11 @@ func RefreshToken(ctx *gin.Context) {
 	})
 }
 
-func AuthUser(ctx *gin.Context) {
-	authUser, _ := ctx.Get("authUser")
-	user := authUser.(models.User)
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "get auth user",
-		"data":    user,
-	})
-}
-
-func UpdateAuthUser(ctx *gin.Context) {
-	var updateAuthUserDto dto.UpdateAuthUserDto
-	ctx.ShouldBind(&updateAuthUserDto)
-	validationErrors := utils.Validate(updateAuthUserDto)
+func ForgotPassword(ctx *gin.Context) {
+	// get request body
+	var forgotPassword dto.ForgotPasswordDto
+	ctx.ShouldBind(&forgotPassword)
+	validationErrors := utils.Validate(forgotPassword)
 	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
@@ -147,57 +141,75 @@ func UpdateAuthUser(ctx *gin.Context) {
 		return
 	}
 
-	authUser, _ := ctx.Get("authUser")
-	user := authUser.(models.User)
-	user.Name = updateAuthUserDto.Name
-	user.Email = updateAuthUserDto.Email
-	database.DB.Save(&user)
-	user, _ = models.GetUser(database.DB, user.Id)
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "update auth user",
-		"data":    user,
+	// check user
+	user, err := models.GetUserBy(models.GetDataByOptions{
+		DB:        database.DB,
+		Field:     "email",
+		Value:     forgotPassword.Email,
+		ExcludeId: nil,
 	})
-}
-
-func UpdateAuthUserPassword(ctx *gin.Context) {
-	var updateAuthUserPasswordDto dto.UpdateAuthUserPasswordDto
-	ctx.ShouldBind(&updateAuthUserPasswordDto)
-	validationErrors := utils.Validate(updateAuthUserPasswordDto)
-	if len(validationErrors) > 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "errors validation",
-			"errors":  validationErrors,
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "there is no user with email '" + forgotPassword.Email + "'",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
 		})
 		return
 	}
 
-	authUser, _ := ctx.Get("authUser")
-	user := authUser.(models.User)
-	correctPassword, err := utils.ComparePassword(user.Password, updateAuthUserPasswordDto.Password)
+	// create token
+	var randomString string
+	for {
+		var token models.Token
+		randomString = utils.GenerateRandomString(64)
+		result := database.DB.Where("token = ?", randomString).First(&token)
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			break
+		}
+	}
+	randomUuid, _ := uuid.NewRandom()
+	token := models.Token{
+		BaseModel: models.BaseModel{Id: randomUuid},
+		Token:     randomString,
+		Type:      models.TokenForgotPassword,
+		UserId:    user.Id,
+		ExpiredAt: time.Now().Add(time.Hour),
+	}
+	result := database.DB.Save(&token)
+	if result.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": result.Error.Error(),
+		})
+		return
+	}
+	token, _ = models.GetToken(database.DB, token.Id)
+
+	// send link to reset password
+	url := os.Getenv("BASE_URL") + "/auth/reset-password?token=" + token.Token
+	err = utils.SendMail(utils.SendMailOptions{
+		Subject: "Forgot Password",
+		To:      user.Email,
+		Message: "<a href=\"" + url + "\">" + url + "</a>",
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	if !correctPassword {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "password is incorrect",
-		})
-		return
-	}
-	hashedPassword, err := utils.HashPassword(updateAuthUserPasswordDto.NewPassword)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-	user.Password = string(hashedPassword)
-	database.DB.Save(&user)
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "update auth user password",
-	})
+	if Env := os.Getenv("ENV"); Env == "production" {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "forgot password",
+		})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "forgot password",
+			"data":    token.Token,
+		})
+	}
 }

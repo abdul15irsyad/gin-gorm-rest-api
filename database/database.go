@@ -33,6 +33,7 @@ func InitDatabase() {
 		models.File{},
 		models.Role{},
 		models.User{},
+		models.Token{},
 	}
 	for _, model := range allModels {
 		err = db.AutoMigrate(&model)

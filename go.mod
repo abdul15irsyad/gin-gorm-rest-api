@@ -14,7 +14,11 @@ require (
 	gorm.io/gorm v1.25.5
 )
 
-require github.com/go-faker/faker/v4 v4.4.1 // indirect
+require (
+	github.com/go-faker/faker/v4 v4.4.1 // indirect
+	github.com/go-mail/mail v2.3.1+incompatible // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.10.2 // indirect

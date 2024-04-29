@@ -14,7 +14,7 @@ type User struct {
 	Email    string     `json:"email" gorm:"not null;uniqueIndex:idx_users_email,where:deleted_at IS NULL"`
 	Password string     `json:"-" gorm:"select:false;not null"`
 	RoleId   uuid.UUID  `json:"-" gorm:"not null"`
-	Role     Role       `json:"role" gorm:"foreignKey:RoleId;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Role     *Role      `json:"role" gorm:"foreignKey:RoleId;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	ImageId  *uuid.UUID `json:"-"`
 	Image    *File      `json:"image" gorm:"foreignKey:ImageId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
