@@ -11,22 +11,26 @@ import (
 type Role struct {
 	BaseModel
 	Name string  `json:"name" gorm:"not null"`
-	Slug string  `json:"slug" gorm:"index;not null"`
+	Slug string  `json:"slug" gorm:"not null;uniqueIndex:idx_roles_slug,where:deleted_at IS NULL"`
 	Desc *string `json:"desc" gorm:"comment:description"`
-}
-
-func GetRoleBySlug(roles *[]Role, slug string) (Role, bool) {
-	for _, role := range *roles {
-		if role.Slug == slug {
-			return role, true
-		}
-	}
-	return Role{}, false
 }
 
 func GetRole(db *gorm.DB, id uuid.UUID) (Role, error) {
 	var role Role
 	result := db.Preload(clause.Associations).First(&role, "id = ?", id)
+	if result.Error != nil {
+		return Role{}, result.Error
+	}
+	return role, nil
+}
+
+func GetRoleBy(options GetDataByOptions) (Role, error) {
+	var role Role
+	query := options.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
+	if options.ExcludeId != nil {
+		query = query.Where("id != ?", *options.ExcludeId)
+	}
+	result := query.First(&role)
 	if result.Error != nil {
 		return Role{}, result.Error
 	}

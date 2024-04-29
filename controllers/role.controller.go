@@ -77,6 +77,29 @@ func CreateRole(ctx *gin.Context) {
 	var createRoleDto dto.CreateRoleDto
 	ctx.ShouldBind(&createRoleDto)
 	validationErrors := utils.Validate(createRoleDto)
+	// check is name unique in database
+	nameErrorExists := false
+	for _, validationError := range validationErrors {
+		if validationError.Field == "Name" {
+			nameErrorExists = true
+		}
+	}
+	if !nameErrorExists {
+		_, err := models.GetRoleBy(models.GetDataByOptions{
+			DB:        database.DB,
+			Field:     "slug",
+			Value:     slug.Make(createRoleDto.Name),
+			ExcludeId: nil,
+		})
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			validationErrors = append(validationErrors, utils.ErrorResponse{
+				Field:   "Name",
+				Message: "Key: 'createRoleDto.Name' Error:Field validation for 'Name' failed on the 'unique' tag",
+				Tag:     "unique",
+				Value:   createRoleDto.Name,
+			})
+		}
+	}
 	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",
@@ -114,6 +137,29 @@ func UpdateRole(ctx *gin.Context) {
 	ctx.ShouldBind(&updateRoleDto)
 	updateRoleDto.Id = paramId
 	validationErrors := utils.Validate(updateRoleDto)
+	// check is name unique in database
+	nameErrorExists := false
+	for _, validationError := range validationErrors {
+		if validationError.Field == "Name" {
+			nameErrorExists = true
+		}
+	}
+	if !nameErrorExists {
+		_, err := models.GetRoleBy(models.GetDataByOptions{
+			DB:        database.DB,
+			Field:     "slug",
+			Value:     slug.Make(updateRoleDto.Name),
+			ExcludeId: &updateRoleDto.Id,
+		})
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			validationErrors = append(validationErrors, utils.ErrorResponse{
+				Field:   "Name",
+				Message: "Key: 'updateRoleDto.Name' Error:Field validation for 'Name' failed on the 'unique' tag",
+				Tag:     "unique",
+				Value:   updateRoleDto.Name,
+			})
+		}
+	}
 	if len(validationErrors) > 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "errors validation",

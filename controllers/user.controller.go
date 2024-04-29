@@ -84,7 +84,12 @@ func CreateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := models.GetUserByField(database.DB, "email", createUserDto.Email, nil)
+		_, err := models.GetUserBy(models.GetDataByOptions{
+			DB:        database.DB,
+			Field:     "email",
+			Value:     createUserDto.Email,
+			ExcludeId: nil,
+		})
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			validationErrors = append(validationErrors, utils.ErrorResponse{
 				Field:   "Email",
@@ -154,7 +159,12 @@ func UpdateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := models.GetUserByField(database.DB, "email", updateUserDto.Email, &updateUserDto.Id)
+		_, err := models.GetUserBy(models.GetDataByOptions{
+			DB:        database.DB,
+			Field:     "email",
+			Value:     updateUserDto.Email,
+			ExcludeId: &updateUserDto.Id,
+		})
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			validationErrors = append(validationErrors, utils.ErrorResponse{
 				Field:   "Email",

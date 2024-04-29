@@ -37,11 +37,11 @@ func GetUser(db *gorm.DB, id uuid.UUID) (User, error) {
 	return user, nil
 }
 
-func GetUserByField(db *gorm.DB, field string, value string, excludeId *string) (User, error) {
+func GetUserBy(options GetDataByOptions) (User, error) {
 	var user User
-	query := db.Preload(clause.Associations).Where(field+" = ?", value)
-	if excludeId != nil {
-		query = query.Where("id != ?", *excludeId)
+	query := options.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
+	if options.ExcludeId != nil {
+		query = query.Where("id != ?", *options.ExcludeId)
 	}
 	result := query.First(&user)
 	if result.Error != nil {
