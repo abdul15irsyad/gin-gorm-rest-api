@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2 // indirect
 	github.com/go-faker/faker/v4 v4.4.1 // indirect
 	github.com/go-mail/mail v2.3.1+incompatible // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
