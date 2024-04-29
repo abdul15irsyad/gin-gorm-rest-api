@@ -209,7 +209,74 @@ func ForgotPassword(ctx *gin.Context) {
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{
 			"message": "forgot password",
-			"data":    token.Token,
+			"data": gin.H{
+				"token": token.Token,
+			},
 		})
 	}
+}
+
+func ResetPassword(ctx *gin.Context) {
+	tokenString := ctx.Query("token")
+	if tokenString == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid token",
+		})
+		return
+	}
+	var token models.Token
+	result := database.DB.Where("token = ? AND type = ?", tokenString, models.TokenForgotPassword).First(&token)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "invalid token",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": result.Error.Error(),
+		})
+		return
+	}
+	if token.ExpiredAt.Before(time.Now()) {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":    "TOKEN_EXPIRED",
+			"message": "token expired",
+		})
+		return
+	}
+
+	// get request body
+	var resetPassword dto.ResetPasswordDto
+	ctx.ShouldBind(&resetPassword)
+	validationErrors := utils.Validate(resetPassword)
+	if len(validationErrors) > 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "errors validation",
+			"errors":  validationErrors,
+		})
+		return
+	}
+
+	// change password in database
+	user, err := models.GetUser(database.DB, token.UserId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	hashedPassword, _ := utils.HashPassword(resetPassword.Password)
+	user.Password = string(hashedPassword)
+	result = database.DB.Save(&user)
+	if result.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": result.Error.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "reset password",
+	})
 }

@@ -14,6 +14,7 @@ func AuthRoutes(route *gin.Engine) {
 	authRoute.POST("/register", controllers.Register)
 	authRoute.GET("/refresh-token", controllers.RefreshToken)
 	authRoute.POST("/forgot-password", controllers.ForgotPassword)
+	authRoute.POST("/reset-password", controllers.ResetPassword)
 	// auth user route
 	authUserRoute := authRoute.Group("/user", middlewares.Auth)
 	authUserRoute.GET("/", controllers.AuthUser)

@@ -10,7 +10,7 @@ import (
 
 type Token struct {
 	BaseModel
-	Token     string    `json:"token" gorm:"not null"`
+	Token     string    `json:"token" gorm:"index,not null"`
 	Type      TokenType `json:"type" gorm:"not null"`
 	ExpiredAt time.Time `json:"expiredAt"`
 	UserId    uuid.UUID `json:"-" gorm:"not null"`
