@@ -3,7 +3,6 @@ package seeders
 import (
 	"errors"
 	"fmt"
-	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/models"
 	"log"
 	"time"
@@ -12,14 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func FileSeeder() {
+func FileSeeder(DB *gorm.DB) {
 	// check seeder
 	const seederName = "FileSeeder"
 	var (
 		seeder  models.Seeder
 		newUuid uuid.UUID
 	)
-	result := database.DB.Where("name = ?", seederName).First(&seeder)
+	result := DB.Where("name = ?", seederName).First(&seeder)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println(fmt.Sprint(seederName), "already executed")
 		return
@@ -41,13 +40,13 @@ func FileSeeder() {
 		}
 		files = append(files, file)
 	}
-	result = database.DB.Create(&files)
+	result = DB.Create(&files)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 
 	// add to seeder table
-	database.DB.Create(&models.Seeder{
+	DB.Create(&models.Seeder{
 		Name:      seederName,
 		CreatedAt: time.Now(),
 	})

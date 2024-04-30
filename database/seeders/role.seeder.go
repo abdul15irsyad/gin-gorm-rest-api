@@ -3,7 +3,6 @@ package seeders
 import (
 	"errors"
 	"fmt"
-	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/models"
 	"log"
 	"time"
@@ -13,13 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func RoleSeeder() {
+func RoleSeeder(DB *gorm.DB) {
 	// check seeder
 	const seederName = "RoleSeeder"
 	var (
 		seeder models.Seeder
 	)
-	result := database.DB.Where("name = ?", seederName).First(&seeder)
+	result := DB.Where("name = ?", seederName).First(&seeder)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println(fmt.Sprint(seederName), "already executed")
 		return
@@ -44,13 +43,13 @@ func RoleSeeder() {
 		Desc:      nil,
 	}
 	roles = append(roles, role)
-	result = database.DB.Create(&roles)
+	result = DB.Create(&roles)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 
 	// add to seeder table
-	database.DB.Create(&models.Seeder{
+	DB.Create(&models.Seeder{
 		Name:      seederName,
 		CreatedAt: time.Now(),
 	})

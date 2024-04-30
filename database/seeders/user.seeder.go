@@ -3,7 +3,6 @@ package seeders
 import (
 	"errors"
 	"fmt"
-	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"log"
@@ -16,13 +15,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func UserSeeder() {
+func UserSeeder(DB *gorm.DB) {
 	// check seeder
 	const seederName = "UserSeeder"
 	var (
 		seeder models.Seeder
 	)
-	result := database.DB.Where("name = ?", seederName).First(&seeder)
+	result := DB.Where("name = ?", seederName).First(&seeder)
 	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		log.Println(fmt.Sprint(seederName), "already executed")
 		return
@@ -30,7 +29,7 @@ func UserSeeder() {
 
 	// seeder data
 	var images []models.File
-	database.DB.Where("filename ILIKE ?", "%"+"dummy-profile"+"%").Find(&images)
+	DB.Where("filename ILIKE ?", "%"+"dummy-profile"+"%").Find(&images)
 	users := []models.User{}
 	administratorRoleId, _ := uuid.Parse("92833737-af8f-4af2-993d-74ec5b235109")
 	userRoleId, _ := uuid.Parse("3ed4e622-4642-499a-b711-fb86a458f098")
@@ -74,13 +73,13 @@ func UserSeeder() {
 		}
 		users = append(users, user)
 	}
-	result = database.DB.Create(&users)
+	result = DB.Create(&users)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 
 	// add to seeder table
-	database.DB.Create(&models.Seeder{
+	DB.Create(&models.Seeder{
 		Name:      seederName,
 		CreatedAt: time.Now(),
 	})
