@@ -10,11 +10,12 @@ import (
 
 type Token struct {
 	BaseModel
-	Token     string    `json:"token" gorm:"index,not null"`
-	Type      TokenType `json:"type" gorm:"not null"`
-	ExpiredAt time.Time `json:"expiredAt"`
-	UserId    uuid.UUID `json:"-" gorm:"not null"`
-	User      *User     `json:"user" gorm:"foreignKey:UserId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Token     string     `json:"token" gorm:"index,not null"`
+	Type      TokenType  `json:"type" gorm:"not null"`
+	ExpiredAt time.Time  `json:"expiredAt"`
+	UsedAt    *time.Time `json:"-"`
+	UserId    uuid.UUID  `json:"-" gorm:"not null"`
+	User      *User      `json:"user" gorm:"foreignKey:UserId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 type TokenType string

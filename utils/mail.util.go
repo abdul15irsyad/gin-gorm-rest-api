@@ -15,6 +15,7 @@ type SendMailOptions struct {
 }
 
 func SendMail(options SendMailOptions) error {
+	APP_NAME := os.Getenv("APP_NAME")
 	SMTP_HOST := os.Getenv("SMTP_HOST")
 	SMTP_PORT, _ := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	SMTP_USERNAME := os.Getenv("SMTP_USERNAME")
@@ -22,7 +23,7 @@ func SendMail(options SendMailOptions) error {
 	SMTP_FROM := os.Getenv("SMTP_FROM")
 
 	message := gomail.NewMessage()
-	message.SetHeader("From", SMTP_FROM)
+	message.SetHeader("From", APP_NAME+" <"+SMTP_FROM+">")
 	message.SetHeader("To", options.To)
 	message.SetHeader("Subject", options.Subject)
 	message.SetBody("text/html", options.Message)

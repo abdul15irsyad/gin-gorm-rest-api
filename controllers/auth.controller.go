@@ -225,7 +225,7 @@ func ResetPassword(ctx *gin.Context) {
 		return
 	}
 	var token models.Token
-	result := database.DB.Where("token = ? AND type = ?", tokenString, models.TokenForgotPassword).First(&token)
+	result := database.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -269,6 +269,17 @@ func ResetPassword(ctx *gin.Context) {
 	hashedPassword, _ := utils.HashPassword(resetPassword.Password)
 	user.Password = string(hashedPassword)
 	result = database.DB.Save(&user)
+	if result.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": result.Error.Error(),
+		})
+		return
+	}
+
+	// update token's used at so the token cannot be used twice or more
+	now := time.Now()
+	token.UsedAt = &now
+	result = database.DB.Save(&token)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
