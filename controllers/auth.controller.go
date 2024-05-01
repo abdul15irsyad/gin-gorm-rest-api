@@ -190,17 +190,11 @@ func ForgotPassword(ctx *gin.Context) {
 
 	// send link to reset password
 	url := os.Getenv("BASE_URL") + "/auth/reset-password?token=" + token.Token
-	err = utils.SendMail(utils.SendMailOptions{
+	go utils.SendMail(utils.SendMailOptions{
 		Subject: "Forgot Password",
 		To:      user.Email,
 		Message: "<a href=\"" + url + "\">" + url + "</a>",
 	})
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
 
 	if Env := os.Getenv("ENV"); Env == "production" {
 		ctx.JSON(http.StatusOK, gin.H{

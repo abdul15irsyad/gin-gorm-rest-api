@@ -19,6 +19,10 @@ func main() {
 	}
 	database.InitDatabase()
 
+	Env := os.Getenv("ENV")
+	if Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 20
 	router.Use(cors.New(cors.Config{
@@ -39,7 +43,6 @@ func main() {
 
 	// listen on port
 	Port := os.Getenv("PORT")
-	Env := os.Getenv("ENV")
 	log.Println("environment=" + Env)
 	router.Run("localhost:" + fmt.Sprint(Port))
 }
