@@ -59,7 +59,7 @@ func UserSeeder(DB *gorm.DB) {
 	for i := 0; i < 30-usersLength; i++ {
 		randomUuid, _ := uuid.NewRandom()
 		hashedPassword, _ := utils.HashPassword("Qwerty123")
-		randomFile := *utils.RandomArray(images)
+		randomFile := utils.RandomSlice(images)
 		name := faker.Name()
 		user := models.User{
 			BaseModel: models.BaseModel{Id: randomUuid},
@@ -68,7 +68,7 @@ func UserSeeder(DB *gorm.DB) {
 			Password:  string(hashedPassword),
 			RoleId:    userRoleId,
 		}
-		if *utils.RandomArray([]bool{true, false}) {
+		if utils.RandomSlice([]bool{true, false}) {
 			user.ImageId = &randomFile.Id
 		}
 		users = append(users, user)
