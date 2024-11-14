@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"math"
@@ -12,21 +13,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type FileService struct {
-	db *gorm.DB
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewFileService(db *gorm.DB) *FileService {
-	return &FileService{db: db}
+func NewFileService(databaseConfig *config.DatabaseConfig) *FileService {
+	return &FileService{databaseConfig: databaseConfig}
 }
 
 func (fs *FileService) GetFile(id uuid.UUID) (models.File, error) {
 	var file models.File
-	result := fs.db.Preload(clause.Associations).First(&file, "id = ?", id)
+	result := fs.databaseConfig.DB.Preload(clause.Associations).First(&file, "id = ?", id)
 	if result.Error != nil {
 		return models.File{}, result.Error
 	}
@@ -38,7 +38,7 @@ func (fs *FileService) GetPaginatedFiles(page int, limit int, search *string) ([
 	var files []models.File
 	offset := (page - 1) * limit
 
-	query := fs.db.Model(&models.File{})
+	query := fs.databaseConfig.DB.Model(&models.File{})
 	if search != nil && *search != "" {
 		query = query.Where("filename ILIKE ? OR original_filename ILIKE ? OR mime ILIKE ?", "%"+*search+"%", "%"+*search+"%", "%"+*search+"%")
 	}
@@ -56,7 +56,7 @@ func (fs *FileService) GetPaginatedFiles(page int, limit int, search *string) ([
 	return files, int(count), totalPages, result.Error
 }
 
-func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.DB) (models.File, bool) {
+func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader) (models.File, bool) {
 	filename := fmt.Sprint(time.Now().UnixMicro()) + "-" + utils.Slugify(strings.Split(file.Filename, ".")[0]) + "." + strings.Split(file.Filename, ".")[1]
 	err := ctx.SaveUploadedFile(file, "./assets/uploads/"+filename)
 	if err != nil {
@@ -80,7 +80,7 @@ func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.Fil
 		OriginalFilename: file.Filename,
 		Mime:             mime,
 	}
-	result := db.Save(&newFile)
+	result := fs.databaseConfig.DB.Save(&newFile)
 	if result.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),

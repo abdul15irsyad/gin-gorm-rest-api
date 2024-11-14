@@ -1,26 +1,26 @@
 package services
 
 import (
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
 	"math"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type UserService struct {
-	db *gorm.DB
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{db: db}
+func NewUserService(databaseConfig *config.DatabaseConfig) *UserService {
+	return &UserService{databaseConfig: databaseConfig}
 }
 
 func (us *UserService) GetUser(id uuid.UUID) (models.User, error) {
 	var user models.User
-	result := us.db.Preload(clause.Associations).First(&user, "id = ?", id)
+	result := us.databaseConfig.DB.Preload(clause.Associations).First(&user, "id = ?", id)
 	if result.Error != nil {
 		return models.User{}, result.Error
 	}
@@ -30,7 +30,7 @@ func (us *UserService) GetUser(id uuid.UUID) (models.User, error) {
 
 func (us *UserService) GetUserBy(options dto.GetDataByOptions) (models.User, error) {
 	var user models.User
-	query := us.db.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
+	query := us.databaseConfig.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
 	if options.ExcludeId != nil {
 		query = query.Where("id != ?", *options.ExcludeId)
 	}
@@ -46,7 +46,7 @@ func (us *UserService) GetPaginatedUsers(page int, limit int, search *string) ([
 	var users []models.User
 	offset := (page - 1) * limit
 
-	query := us.db.Model(&models.User{})
+	query := us.databaseConfig.DB.Model(&models.User{})
 	if search != nil && *search != "" {
 		query = query.Where("name ILIKE ? OR email ILIKE ?", "%"+*search+"%", "%"+*search+"%")
 	}

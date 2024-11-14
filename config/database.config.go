@@ -1,4 +1,4 @@
-package database
+package config
 
 import (
 	"gin-gorm-rest-api/models"
@@ -9,9 +9,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+type DatabaseConfig struct {
+	DB *gorm.DB
+}
 
-func InitDatabase() {
+func NewDatabaseConfig() *DatabaseConfig {
 	DB_HOST := os.Getenv("DB_HOST")
 	DB_PORT := os.Getenv("DB_PORT")
 	DB_USER := os.Getenv("DB_USER")
@@ -42,5 +44,5 @@ func InitDatabase() {
 		}
 	}
 
-	DB = db
+	return &DatabaseConfig{DB: db}
 }

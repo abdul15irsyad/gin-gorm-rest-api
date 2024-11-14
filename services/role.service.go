@@ -1,26 +1,26 @@
 package services
 
 import (
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
 	"math"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type RoleService struct {
-	db *gorm.DB
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewRoleService(db *gorm.DB) *RoleService {
-	return &RoleService{db: db}
+func NewRoleService(databaseConfig *config.DatabaseConfig) *RoleService {
+	return &RoleService{databaseConfig: databaseConfig}
 }
 
 func (rs *RoleService) GetRole(id uuid.UUID) (models.Role, error) {
 	var role models.Role
-	result := rs.db.Preload(clause.Associations).First(&role, "id = ?", id)
+	result := rs.databaseConfig.DB.Preload(clause.Associations).First(&role, "id = ?", id)
 	if result.Error != nil {
 		return models.Role{}, result.Error
 	}
@@ -29,7 +29,7 @@ func (rs *RoleService) GetRole(id uuid.UUID) (models.Role, error) {
 
 func (rs *RoleService) GetRoleBy(options dto.GetDataByOptions) (models.Role, error) {
 	var role models.Role
-	query := rs.db.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
+	query := rs.databaseConfig.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
 	if options.ExcludeId != nil {
 		query = query.Where("id != ?", *options.ExcludeId)
 	}
@@ -44,7 +44,7 @@ func (rs *RoleService) GetPaginatedRoles(page int, limit int, search *string) ([
 	var roles []models.Role
 	offset := (page - 1) * limit
 
-	query := rs.db.Model(&models.Role{})
+	query := rs.databaseConfig.DB.Model(&models.Role{})
 	if search != nil && *search != "" {
 		query = query.Where("name ILIKE ?", "%"+*search+"%")
 	}

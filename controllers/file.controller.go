@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
@@ -15,11 +15,12 @@ import (
 )
 
 type FileController struct {
-	fileService *services.FileService
+	fileService    *services.FileService
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewFileController(fileService *services.FileService) *FileController {
-	return &FileController{fileService: fileService}
+func NewFileController(fileService *services.FileService, databaseConfig *config.DatabaseConfig) *FileController {
+	return &FileController{fileService: fileService, databaseConfig: databaseConfig}
 }
 
 func (fc *FileController) GetFile(ctx *gin.Context) {
@@ -95,7 +96,7 @@ func (fc *FileController) CreateFile(ctx *gin.Context) {
 		return
 	}
 
-	newFile, ok := fc.fileService.UploadAndCreateFile(ctx, file, database.DB)
+	newFile, ok := fc.fileService.UploadAndCreateFile(ctx, file)
 	if !ok {
 		return
 	}
@@ -129,7 +130,7 @@ func (fc *FileController) DeleteFile(ctx *gin.Context) {
 		return
 	}
 
-	database.DB.Delete(&file)
+	fc.databaseConfig.DB.Delete(&file)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete file",

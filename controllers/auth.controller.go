@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/middlewares"
 	"gin-gorm-rest-api/models"
@@ -21,10 +21,11 @@ type AuthController struct {
 	jwtService     *services.JwtService
 	userService    *services.UserService
 	authMiddleware *middlewares.AuthMiddleware
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewAuthController(jwtService *services.JwtService, userService *services.UserService) *AuthController {
-	return &AuthController{jwtService: jwtService, userService: userService}
+func NewAuthController(jwtService *services.JwtService, userService *services.UserService, databaseConfig *config.DatabaseConfig) *AuthController {
+	return &AuthController{jwtService: jwtService, userService: userService, databaseConfig: databaseConfig}
 }
 
 func (ac *AuthController) Login(ctx *gin.Context) {
@@ -41,7 +42,7 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 
 	// verify credential
 	var authUser models.User
-	result := database.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
+	result := ac.databaseConfig.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// for decoy
 		utils.ComparePassword("some password", loginDto.Password)
@@ -110,7 +111,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		Password:  string(hashedPassword),
 		RoleId:    userRoleId,
 	}
-	database.DB.Save(&user)
+	ac.databaseConfig.DB.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "register",
@@ -177,7 +178,7 @@ func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
 	for {
 		var token models.Token
 		randomString = utils.GenerateRandomString(64)
-		result := database.DB.Where("token = ?", randomString).First(&token)
+		result := ac.databaseConfig.DB.Where("token = ?", randomString).First(&token)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			break
 		}
@@ -190,14 +191,14 @@ func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
 		UserId:    user.Id,
 		ExpiredAt: time.Now().Add(time.Hour),
 	}
-	result := database.DB.Save(&token)
+	result := ac.databaseConfig.DB.Save(&token)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
 		})
 		return
 	}
-	token, _ = models.GetToken(database.DB, token.Id)
+	token, _ = models.GetToken(ac.databaseConfig.DB, token.Id)
 
 	// send link to reset password
 	url := os.Getenv("BASE_URL") + "/auth/reset-password?token=" + token.Token
@@ -230,7 +231,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 		return
 	}
 	var token models.Token
-	result := database.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
+	result := ac.databaseConfig.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -273,7 +274,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 	}
 	hashedPassword, _ := utils.HashPassword(resetPassword.Password)
 	user.Password = string(hashedPassword)
-	result = database.DB.Save(&user)
+	result = ac.databaseConfig.DB.Save(&user)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
@@ -284,7 +285,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 	// update token's used at so the token cannot be used twice or more
 	now := time.Now()
 	token.UsedAt = &now
-	result = database.DB.Save(&token)
+	result = ac.databaseConfig.DB.Save(&token)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),

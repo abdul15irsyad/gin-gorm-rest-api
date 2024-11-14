@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
@@ -16,11 +16,12 @@ import (
 )
 
 type UserController struct {
-	userService *services.UserService
+	userService    *services.UserService
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewUserController(userService *services.UserService) *UserController {
-	return &UserController{userService: userService}
+func NewUserController(userService *services.UserService, databaseConfig *config.DatabaseConfig) *UserController {
+	return &UserController{userService: userService, databaseConfig: databaseConfig}
 }
 
 func (uc *UserController) GetAllUsers(ctx *gin.Context) {
@@ -138,7 +139,7 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 		Password:  string(hashedPassword),
 		RoleId:    roleId,
 	}
-	result := database.DB.Save(&user)
+	result := uc.databaseConfig.DB.Save(&user)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
@@ -212,7 +213,7 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		}
 		user.Password = string(hashedPassword)
 	}
-	database.DB.Save(&user)
+	uc.databaseConfig.DB.Save(&user)
 	user, _ = uc.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -244,7 +245,7 @@ func (uc *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	database.DB.Delete(&user)
+	uc.databaseConfig.DB.Delete(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete user",

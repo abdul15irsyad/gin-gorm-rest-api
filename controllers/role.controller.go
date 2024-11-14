@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
@@ -17,11 +17,12 @@ import (
 )
 
 type RoleController struct {
-	roleService *services.RoleService
+	roleService    *services.RoleService
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewRoleController(roleService *services.RoleService) *RoleController {
-	return &RoleController{roleService: roleService}
+func NewRoleController(roleService *services.RoleService, databaseConfig *config.DatabaseConfig) *RoleController {
+	return &RoleController{roleService: roleService, databaseConfig: databaseConfig}
 }
 
 func (rc *RoleController) GetAllRoles(ctx *gin.Context) {
@@ -130,7 +131,7 @@ func (rc *RoleController) CreateRole(ctx *gin.Context) {
 		Slug:      slug.Make(createRoleDto.Name),
 		Desc:      createRoleDto.Desc,
 	}
-	database.DB.Save(&role)
+	rc.databaseConfig.DB.Save(&role)
 	role, _ = rc.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
@@ -187,7 +188,7 @@ func (rc *RoleController) UpdateRole(ctx *gin.Context) {
 	role.Name = updateRoleDto.Name
 	role.Slug = slug.Make(updateRoleDto.Name)
 	role.Desc = updateRoleDto.Desc
-	database.DB.Save(&role)
+	rc.databaseConfig.DB.Save(&role)
 	role, _ = rc.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -219,7 +220,7 @@ func (rc *RoleController) DeleteRole(ctx *gin.Context) {
 		return
 	}
 
-	database.DB.Delete(&role)
+	rc.databaseConfig.DB.Delete(&role)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete role",

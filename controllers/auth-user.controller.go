@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"gin-gorm-rest-api/database"
+	"gin-gorm-rest-api/config"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
@@ -12,11 +12,12 @@ import (
 )
 
 type AuthUserController struct {
-	userService *services.UserService
+	userService    *services.UserService
+	databaseConfig *config.DatabaseConfig
 }
 
-func NewAuthUserController(userService *services.UserService) *AuthUserController {
-	return &AuthUserController{userService: userService}
+func NewAuthUserController(userService *services.UserService, databaseConfig *config.DatabaseConfig) *AuthUserController {
+	return &AuthUserController{userService: userService, databaseConfig: databaseConfig}
 }
 
 func (auc *AuthUserController) AuthUser(ctx *gin.Context) {
@@ -44,7 +45,7 @@ func (auc *AuthUserController) UpdateAuthUser(ctx *gin.Context) {
 	user := authUser.(models.User)
 	user.Name = updateAuthUserDto.Name
 	user.Email = updateAuthUserDto.Email
-	database.DB.Save(&user)
+	auc.databaseConfig.DB.Save(&user)
 	user, _ = auc.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -88,7 +89,7 @@ func (auc *AuthUserController) UpdateAuthUserPassword(ctx *gin.Context) {
 		return
 	}
 	user.Password = string(hashedPassword)
-	database.DB.Save(&user)
+	auc.databaseConfig.DB.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update auth user password",
