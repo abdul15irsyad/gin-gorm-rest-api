@@ -37,12 +37,6 @@ func main() {
 	router.SetTrustedProxies([]string{})
 	router.Static("/assets", "./assets")
 
-	// init routes
-	// routes.AuthRoutes(router)
-	// routes.UserRoutes(router)
-	// routes.RoleRoutes(router)
-	// routes.FileRoutes(router)
-
 	// services init
 	jwtService := services.NewJwtService()
 	userService := services.NewUserService(database.DB)
