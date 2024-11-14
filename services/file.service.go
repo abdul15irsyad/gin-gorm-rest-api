@@ -16,9 +16,17 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func GetFile(db *gorm.DB, id uuid.UUID) (models.File, error) {
+type FileService struct {
+	db *gorm.DB
+}
+
+func NewFileService(db *gorm.DB) *FileService {
+	return &FileService{db: db}
+}
+
+func (fs *FileService) GetFile(id uuid.UUID) (models.File, error) {
 	var file models.File
-	result := db.Preload(clause.Associations).First(&file, "id = ?", id)
+	result := fs.db.Preload(clause.Associations).First(&file, "id = ?", id)
 	if result.Error != nil {
 		return models.File{}, result.Error
 	}
@@ -26,11 +34,11 @@ func GetFile(db *gorm.DB, id uuid.UUID) (models.File, error) {
 	return file, nil
 }
 
-func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]models.File, int, float64, error) {
+func (fs *FileService) GetPaginatedFiles(page int, limit int, search *string) ([]models.File, int, float64, error) {
 	var files []models.File
 	offset := (page - 1) * limit
 
-	query := db.Model(&models.File{})
+	query := fs.db.Model(&models.File{})
 	if search != nil && *search != "" {
 		query = query.Where("filename ILIKE ? OR original_filename ILIKE ? OR mime ILIKE ?", "%"+*search+"%", "%"+*search+"%", "%"+*search+"%")
 	}
@@ -48,7 +56,7 @@ func GetPaginatedFiles(db *gorm.DB, page int, limit int, search *string) ([]mode
 	return files, int(count), totalPages, result.Error
 }
 
-func UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.DB) (models.File, bool) {
+func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.FileHeader, db *gorm.DB) (models.File, bool) {
 	filename := fmt.Sprint(time.Now().UnixMicro()) + "-" + utils.Slugify(strings.Split(file.Filename, ".")[0]) + "." + strings.Split(file.Filename, ".")[1]
 	err := ctx.SaveUploadedFile(file, "./assets/uploads/"+filename)
 	if err != nil {

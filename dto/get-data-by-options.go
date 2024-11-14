@@ -1,9 +1,6 @@
-package models
-
-import "gorm.io/gorm"
+package dto
 
 type GetDataByOptions struct {
-	DB        *gorm.DB
 	Field     string
 	Value     string
 	ExcludeId *string

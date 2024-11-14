@@ -7,17 +7,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(route *gin.Engine) {
+type AuthRoute struct {
+	authMiddleware     *middlewares.AuthMiddleware
+	authController     *controllers.AuthController
+	authUserController *controllers.AuthUserController
+}
+
+func NewAuthRoute(authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, authUserController *controllers.AuthUserController) *AuthRoute {
+	return &AuthRoute{authMiddleware: authMiddleware, authController: authController, authUserController: authUserController}
+}
+
+func (ar *AuthRoute) Init(route *gin.Engine) {
 	// auth route
 	authRoute := route.Group("/auth")
-	authRoute.POST("/login", controllers.Login)
-	authRoute.POST("/register", controllers.Register)
-	authRoute.GET("/refresh-token", controllers.RefreshToken)
-	authRoute.POST("/forgot-password", controllers.ForgotPassword)
-	authRoute.POST("/reset-password", controllers.ResetPassword)
+	authRoute.POST("/login", ar.authController.Login)
+	authRoute.POST("/register", ar.authController.Register)
+	authRoute.GET("/refresh-token", ar.authController.RefreshToken)
+	authRoute.POST("/forgot-password", ar.authController.ForgotPassword)
+	authRoute.POST("/reset-password", ar.authController.ResetPassword)
 	// auth user route
-	authUserRoute := authRoute.Group("/user", middlewares.Auth)
-	authUserRoute.GET("/", controllers.AuthUser)
-	authUserRoute.PATCH("/", controllers.UpdateAuthUser)
-	authUserRoute.PATCH("/password", controllers.UpdateAuthUserPassword)
+	authUserRoute := authRoute.Group("/user", ar.authMiddleware.Auth)
+	authUserRoute.GET("/", ar.authUserController.AuthUser)
+	authUserRoute.PATCH("/", ar.authUserController.UpdateAuthUser)
+	authUserRoute.PATCH("/password", ar.authUserController.UpdateAuthUserPassword)
 }

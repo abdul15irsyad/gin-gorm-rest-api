@@ -7,10 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FileRoutes(route *gin.Engine) {
-	fileRoute := route.Group("/files", middlewares.Auth)
-	fileRoute.GET("/", controllers.GetAllFiles)
-	fileRoute.GET("/:id", controllers.GetFile)
-	fileRoute.POST("/", controllers.CreateFile)
-	fileRoute.DELETE("/:id", controllers.DeleteFile)
+type FileRoute struct {
+	authMiddleware *middlewares.AuthMiddleware
+	fileController *controllers.FileController
+}
+
+func NewFileRoute(authMiddleware *middlewares.AuthMiddleware, fileController *controllers.FileController) *FileRoute {
+	return &FileRoute{authMiddleware: authMiddleware, fileController: fileController}
+}
+
+func (fr *FileRoute) Init(route *gin.Engine) {
+	fileRoute := route.Group("/files", fr.authMiddleware.Auth)
+	fileRoute.GET("/", fr.fileController.GetAllFiles)
+	fileRoute.GET("/:id", fr.fileController.GetFile)
+	fileRoute.POST("/", fr.fileController.CreateFile)
+	fileRoute.DELETE("/:id", fr.fileController.DeleteFile)
 }

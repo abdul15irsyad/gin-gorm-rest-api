@@ -5,6 +5,7 @@ import (
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 	"strconv"
@@ -15,7 +16,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAllRoles(ctx *gin.Context) {
+type RoleController struct {
+	roleService *services.RoleService
+}
+
+func NewRoleController(roleService *services.RoleService) *RoleController {
+	return &RoleController{roleService: roleService}
+}
+
+func (rc *RoleController) GetAllRoles(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -25,7 +34,7 @@ func GetAllRoles(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	roles, total, totalPage, err := models.GetPaginatedRoles(database.DB, page, limit, &search)
+	roles, total, totalPage, err := rc.roleService.GetPaginatedRoles(page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -44,7 +53,7 @@ func GetAllRoles(ctx *gin.Context) {
 	})
 }
 
-func GetRole(ctx *gin.Context) {
+func (rc *RoleController) GetRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getRoleDto dto.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
@@ -59,7 +68,7 @@ func GetRole(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	role, err := models.GetRole(database.DB, id)
+	role, err := rc.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -73,7 +82,7 @@ func GetRole(ctx *gin.Context) {
 	})
 }
 
-func CreateRole(ctx *gin.Context) {
+func (rc *RoleController) CreateRole(ctx *gin.Context) {
 	var createRoleDto dto.CreateRoleDto
 	ctx.ShouldBind(&createRoleDto)
 	validationErrors := utils.Validate(createRoleDto)
@@ -85,8 +94,7 @@ func CreateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := models.GetRoleBy(models.GetDataByOptions{
-			DB:        database.DB,
+		_, err := rc.roleService.GetRoleBy(dto.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(createRoleDto.Name),
 			ExcludeId: nil,
@@ -123,7 +131,7 @@ func CreateRole(ctx *gin.Context) {
 		Desc:      createRoleDto.Desc,
 	}
 	database.DB.Save(&role)
-	role, _ = models.GetRole(database.DB, role.Id)
+	role, _ = rc.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create role",
@@ -131,7 +139,7 @@ func CreateRole(ctx *gin.Context) {
 	})
 }
 
-func UpdateRole(ctx *gin.Context) {
+func (rc *RoleController) UpdateRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var updateRoleDto dto.UpdateRoleDto
 	ctx.ShouldBind(&updateRoleDto)
@@ -145,8 +153,7 @@ func UpdateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := models.GetRoleBy(models.GetDataByOptions{
-			DB:        database.DB,
+		_, err := rc.roleService.GetRoleBy(dto.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(updateRoleDto.Name),
 			ExcludeId: &updateRoleDto.Id,
@@ -170,7 +177,7 @@ func UpdateRole(ctx *gin.Context) {
 
 	// save to database
 	id, _ := uuid.Parse(paramId)
-	role, err := models.GetRole(database.DB, id)
+	role, err := rc.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -181,7 +188,7 @@ func UpdateRole(ctx *gin.Context) {
 	role.Slug = slug.Make(updateRoleDto.Name)
 	role.Desc = updateRoleDto.Desc
 	database.DB.Save(&role)
-	role, _ = models.GetRole(database.DB, role.Id)
+	role, _ = rc.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update role",
@@ -189,7 +196,7 @@ func UpdateRole(ctx *gin.Context) {
 	})
 }
 
-func DeleteRole(ctx *gin.Context) {
+func (rc *RoleController) DeleteRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getRoleDto dto.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
@@ -204,7 +211,7 @@ func DeleteRole(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	role, err := models.GetRole(database.DB, id)
+	role, err := rc.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",

@@ -4,13 +4,22 @@ import (
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthUser(ctx *gin.Context) {
+type AuthUserController struct {
+	userService *services.UserService
+}
+
+func NewAuthUserController(userService *services.UserService) *AuthUserController {
+	return &AuthUserController{userService: userService}
+}
+
+func (auc *AuthUserController) AuthUser(ctx *gin.Context) {
 	authUser, _ := ctx.Get("authUser")
 	user := authUser.(models.User)
 	ctx.JSON(http.StatusOK, gin.H{
@@ -19,7 +28,7 @@ func AuthUser(ctx *gin.Context) {
 	})
 }
 
-func UpdateAuthUser(ctx *gin.Context) {
+func (auc *AuthUserController) UpdateAuthUser(ctx *gin.Context) {
 	var updateAuthUserDto dto.UpdateAuthUserDto
 	ctx.ShouldBind(&updateAuthUserDto)
 	validationErrors := utils.Validate(updateAuthUserDto)
@@ -36,7 +45,7 @@ func UpdateAuthUser(ctx *gin.Context) {
 	user.Name = updateAuthUserDto.Name
 	user.Email = updateAuthUserDto.Email
 	database.DB.Save(&user)
-	user, _ = models.GetUser(database.DB, user.Id)
+	user, _ = auc.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update auth user",
@@ -44,7 +53,7 @@ func UpdateAuthUser(ctx *gin.Context) {
 	})
 }
 
-func UpdateAuthUserPassword(ctx *gin.Context) {
+func (auc *AuthUserController) UpdateAuthUserPassword(ctx *gin.Context) {
 	var updateAuthUserPasswordDto dto.UpdateAuthUserPasswordDto
 	ctx.ShouldBind(&updateAuthUserPasswordDto)
 	validationErrors := utils.Validate(updateAuthUserPasswordDto)

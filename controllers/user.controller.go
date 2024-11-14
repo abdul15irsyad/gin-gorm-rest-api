@@ -5,6 +5,7 @@ import (
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
 	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 	"strconv"
@@ -14,7 +15,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetAllUsers(ctx *gin.Context) {
+type UserController struct {
+	userService *services.UserService
+}
+
+func NewUserController(userService *services.UserService) *UserController {
+	return &UserController{userService: userService}
+}
+
+func (uc *UserController) GetAllUsers(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -24,7 +33,7 @@ func GetAllUsers(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	users, total, totalPage, err := models.GetPaginatedUsers(database.DB, page, limit, &search)
+	users, total, totalPage, err := uc.userService.GetPaginatedUsers(page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -43,7 +52,7 @@ func GetAllUsers(ctx *gin.Context) {
 	})
 }
 
-func GetUser(ctx *gin.Context) {
+func (uc *UserController) GetUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getUserDto dto.GetUserDto
 	ctx.ShouldBind(&getUserDto)
@@ -58,7 +67,7 @@ func GetUser(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	user, err := models.GetUser(database.DB, id)
+	user, err := uc.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -72,7 +81,7 @@ func GetUser(ctx *gin.Context) {
 	})
 }
 
-func CreateUser(ctx *gin.Context) {
+func (uc *UserController) CreateUser(ctx *gin.Context) {
 	var createUserDto dto.CreateUserDto
 	ctx.ShouldBind(&createUserDto)
 	validationErrors := utils.Validate(createUserDto)
@@ -84,8 +93,7 @@ func CreateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := models.GetUserBy(models.GetDataByOptions{
-			DB:        database.DB,
+		_, err := uc.userService.GetUserBy(dto.GetDataByOptions{
 			Field:     "email",
 			Value:     createUserDto.Email,
 			ExcludeId: nil,
@@ -137,7 +145,7 @@ func CreateUser(ctx *gin.Context) {
 		})
 		return
 	}
-	user, _ = models.GetUser(database.DB, user.Id)
+	user, _ = uc.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create user",
@@ -145,7 +153,7 @@ func CreateUser(ctx *gin.Context) {
 	})
 }
 
-func UpdateUser(ctx *gin.Context) {
+func (uc *UserController) UpdateUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var updateUserDto dto.UpdateUserDto
 	ctx.ShouldBind(&updateUserDto)
@@ -159,8 +167,7 @@ func UpdateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := models.GetUserBy(models.GetDataByOptions{
-			DB:        database.DB,
+		_, err := uc.userService.GetUserBy(dto.GetDataByOptions{
 			Field:     "email",
 			Value:     updateUserDto.Email,
 			ExcludeId: &updateUserDto.Id,
@@ -184,7 +191,7 @@ func UpdateUser(ctx *gin.Context) {
 
 	// save to database
 	id, _ := uuid.Parse(paramId)
-	user, err := models.GetUser(database.DB, id)
+	user, err := uc.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -206,7 +213,7 @@ func UpdateUser(ctx *gin.Context) {
 		user.Password = string(hashedPassword)
 	}
 	database.DB.Save(&user)
-	user, _ = models.GetUser(database.DB, user.Id)
+	user, _ = uc.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update user",
@@ -214,7 +221,7 @@ func UpdateUser(ctx *gin.Context) {
 	})
 }
 
-func DeleteUser(ctx *gin.Context) {
+func (uc *UserController) DeleteUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getUserDto dto.GetUserDto
 	ctx.ShouldBind(&getUserDto)
@@ -229,7 +236,7 @@ func DeleteUser(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	user, err := models.GetUser(database.DB, id)
+	user, err := uc.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
