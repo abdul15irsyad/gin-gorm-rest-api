@@ -4,7 +4,7 @@ import (
 	"errors"
 	"gin-gorm-rest-api/database"
 	"gin-gorm-rest-api/dto"
-	"gin-gorm-rest-api/models"
+	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 	"strconv"
@@ -29,7 +29,7 @@ func GetFile(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	file, err := models.GetFile(database.DB, id)
+	file, err := services.GetFile(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -53,7 +53,7 @@ func GetAllFiles(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	files, total, totalPage, err := models.GetPaginatedFiles(database.DB, page, limit, &search)
+	files, total, totalPage, err := services.GetPaginatedFiles(database.DB, page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -87,7 +87,7 @@ func CreateFile(ctx *gin.Context) {
 		return
 	}
 
-	newFile, ok := models.UploadAndCreateFile(ctx, file, database.DB)
+	newFile, ok := services.UploadAndCreateFile(ctx, file, database.DB)
 	if !ok {
 		return
 	}
@@ -113,7 +113,7 @@ func DeleteFile(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	file, err := models.GetFile(database.DB, id)
+	file, err := services.GetFile(database.DB, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",

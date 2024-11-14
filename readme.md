@@ -19,13 +19,18 @@ project for learning golang with gin framework and gorm as ORM
    ```
 
 2. install dependencies
+
    ```bash
    go mod download
    ```
-3. configure environment, copy from `.env.example` to `.env` and adjust to your setup like database, port, jwt secret, etc.
+
+3. configure environment, copy from `.env.example` to `.env` and adjust to your
+   setup like database, port, jwt secret, etc.
+
    ```bash
    cp .env.example .env
    ```
+
 4. run the project
 
    ```bash
