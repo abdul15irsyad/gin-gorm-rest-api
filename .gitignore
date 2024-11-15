@@ -23,9 +23,13 @@ go.work
 # Environment file
 .env
 
-# tTmporary folder
+# temporary folder
 tmp
 
 # Upload folder
 assets/uploads/*
 !assets/uploads/.gitkeep
+
+# logs folder
+logs/*
+!logs/.gitkeep

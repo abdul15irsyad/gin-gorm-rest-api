@@ -38,7 +38,9 @@ func main() {
 	router.Static("/assets", "./assets")
 
 	// init routes
-	allRoutes := InitRoutes(router)
+	allRoutes, logService, logMiddleware := InitRoutes(router)
+	logService.Init()
+	router.Use(logMiddleware.Log)
 	for _, route := range allRoutes {
 		route.Init(router)
 	}
@@ -62,19 +64,21 @@ func ProvideMultiple(container *dig.Container, constructors []interface{}) error
 	return nil
 }
 
-func InitRoutes(router *gin.Engine) []Route {
+func InitRoutes(router *gin.Engine) ([]Route, *services.LogService, *middlewares.LogMiddleware) {
 	container := dig.New()
 	if err := ProvideMultiple(container, []interface{}{
 		// configs
 		configs.NewDatabaseConfig,
 		// middlewares
 		middlewares.NewAuthMiddleware,
+		middlewares.NewLogMiddleware,
 		// services
 		services.NewFileService,
 		services.NewJwtService,
 		services.NewMailService,
 		services.NewRoleService,
 		services.NewUserService,
+		services.NewLogService,
 		// handlers
 		handlers.NewAuthUserHandler,
 		handlers.NewAuthHandler,
@@ -93,12 +97,19 @@ func InitRoutes(router *gin.Engine) []Route {
 	}
 
 	allRoutes := []Route{}
+	var logService *services.LogService
+	var logMiddleware *middlewares.LogMiddleware
 
-	if err := container.Invoke(func(authRoute *routes.AuthRoute, fileRoute *routes.FileRoute, roleRoute *routes.RoleRoute, rootRoute *routes.RootRoute, userRoute *routes.UserRoute) {
+	if err := container.Invoke(func(
+		authRoute *routes.AuthRoute,
+		fileRoute *routes.FileRoute,
+		roleRoute *routes.RoleRoute, rootRoute *routes.RootRoute, userRoute *routes.UserRoute, ls *services.LogService, lm *middlewares.LogMiddleware) {
 		allRoutes = []Route{authRoute, fileRoute, roleRoute, rootRoute, userRoute}
+		logService = ls
+		logMiddleware = lm
 	}); err != nil {
 		panic(err)
 	}
 
-	return allRoutes
+	return allRoutes, logService, logMiddleware
 }

@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"gin-gorm-rest-api/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type RootHandler struct{}
+type RootHandler struct {
+	logService *services.LogService
+}
 
-func NewRootHandler() *RootHandler {
-	return &RootHandler{}
+func NewRootHandler(logService *services.LogService) *RootHandler {
+	return &RootHandler{logService}
 }
 
 func (rh *RootHandler) Root(ctx *gin.Context) {
