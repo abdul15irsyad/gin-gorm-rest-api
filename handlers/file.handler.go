@@ -20,7 +20,7 @@ type FileHandler struct {
 }
 
 func NewFileHandler(fileService *services.FileService, databaseConfig *configs.DatabaseConfig) *FileHandler {
-	return &FileHandler{fileService: fileService, databaseConfig: databaseConfig}
+	return &FileHandler{fileService, databaseConfig}
 }
 
 func (fh *FileHandler) GetFile(ctx *gin.Context) {

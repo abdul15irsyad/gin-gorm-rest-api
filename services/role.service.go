@@ -15,7 +15,7 @@ type RoleService struct {
 }
 
 func NewRoleService(databaseConfig *configs.DatabaseConfig) *RoleService {
-	return &RoleService{databaseConfig: databaseConfig}
+	return &RoleService{databaseConfig}
 }
 
 func (rs *RoleService) GetRole(id uuid.UUID) (models.Role, error) {

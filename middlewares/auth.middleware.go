@@ -18,8 +18,8 @@ type AuthMiddleware struct {
 
 func NewAuthMiddleware(jwtService *services.JwtService, userService *services.UserService) *AuthMiddleware {
 	return &AuthMiddleware{
-		jwtService:  jwtService,
-		userService: userService,
+		jwtService,
+		userService,
 	}
 }
 

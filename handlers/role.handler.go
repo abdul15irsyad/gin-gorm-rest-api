@@ -22,7 +22,7 @@ type RoleHandler struct {
 }
 
 func NewRoleHandler(roleService *services.RoleService, databaseConfig *configs.DatabaseConfig) *RoleHandler {
-	return &RoleHandler{roleService: roleService, databaseConfig: databaseConfig}
+	return &RoleHandler{roleService, databaseConfig}
 }
 
 func (rh *RoleHandler) GetAllRoles(ctx *gin.Context) {

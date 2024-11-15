@@ -21,7 +21,7 @@ type FileService struct {
 }
 
 func NewFileService(databaseConfig *configs.DatabaseConfig) *FileService {
-	return &FileService{databaseConfig: databaseConfig}
+	return &FileService{databaseConfig}
 }
 
 func (fs *FileService) GetFile(id uuid.UUID) (models.File, error) {

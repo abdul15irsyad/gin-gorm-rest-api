@@ -15,7 +15,7 @@ type UserService struct {
 }
 
 func NewUserService(databaseConfig *configs.DatabaseConfig) *UserService {
-	return &UserService{databaseConfig: databaseConfig}
+	return &UserService{databaseConfig}
 }
 
 func (us *UserService) GetUser(id uuid.UUID) (models.User, error) {

@@ -13,7 +13,7 @@ type RoleRoute struct {
 }
 
 func NewRoleRoute(authMiddleware *middlewares.AuthMiddleware, roleHandler *handlers.RoleHandler) *RoleRoute {
-	return &RoleRoute{authMiddleware: authMiddleware, roleHandler: roleHandler}
+	return &RoleRoute{authMiddleware, roleHandler}
 }
 
 func (rr *RoleRoute) Init(route *gin.Engine) {

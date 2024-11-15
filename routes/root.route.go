@@ -11,7 +11,7 @@ type RootRoute struct {
 }
 
 func NewRootRoute(rootHandler *handlers.RootHandler) *RootRoute {
-	return &RootRoute{rootHandler: rootHandler}
+	return &RootRoute{rootHandler}
 }
 
 func (rr *RootRoute) Init(route *gin.Engine) {

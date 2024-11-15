@@ -17,7 +17,7 @@ type AuthUserHandler struct {
 }
 
 func NewAuthUserHandler(userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthUserHandler {
-	return &AuthUserHandler{userService: userService, databaseConfig: databaseConfig}
+	return &AuthUserHandler{userService, databaseConfig}
 }
 
 func (auh *AuthUserHandler) AuthUser(ctx *gin.Context) {

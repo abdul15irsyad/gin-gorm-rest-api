@@ -14,7 +14,7 @@ type AuthRoute struct {
 }
 
 func NewAuthRoute(authMiddleware *middlewares.AuthMiddleware, authHandler *handlers.AuthHandler, authUserHandler *handlers.AuthUserHandler) *AuthRoute {
-	return &AuthRoute{authMiddleware: authMiddleware, authHandler: authHandler, authUserHandler: authUserHandler}
+	return &AuthRoute{authMiddleware, authHandler, authUserHandler}
 }
 
 func (ar *AuthRoute) Init(route *gin.Engine) {

@@ -25,8 +25,8 @@ type AuthHandler struct {
 	databaseConfig *configs.DatabaseConfig
 }
 
-func NewAuthHandler(jwtService *services.JwtService, mailService *services.MailService, userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthHandler {
-	return &AuthHandler{jwtService: jwtService, mailService: mailService, userService: userService, databaseConfig: databaseConfig}
+func NewAuthHandler(jwtService *services.JwtService, mailService *services.MailService, userService *services.UserService, authMiddleware *middlewares.AuthMiddleware, databaseConfig *configs.DatabaseConfig) *AuthHandler {
+	return &AuthHandler{jwtService, mailService, userService, authMiddleware, databaseConfig}
 }
 
 func (ah *AuthHandler) Login(ctx *gin.Context) {

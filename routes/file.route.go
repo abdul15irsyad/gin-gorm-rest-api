@@ -13,7 +13,7 @@ type FileRoute struct {
 }
 
 func NewFileRoute(authMiddleware *middlewares.AuthMiddleware, fileHandler *handlers.FileHandler) *FileRoute {
-	return &FileRoute{authMiddleware: authMiddleware, fileHandler: fileHandler}
+	return &FileRoute{authMiddleware, fileHandler}
 }
 
 func (fr *FileRoute) Init(route *gin.Engine) {

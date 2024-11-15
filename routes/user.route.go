@@ -13,7 +13,7 @@ type UserRoute struct {
 }
 
 func NewUserRoute(authMiddleware *middlewares.AuthMiddleware, userHandler *handlers.UserHandler) *UserRoute {
-	return &UserRoute{userHandler: userHandler, authMiddleware: authMiddleware}
+	return &UserRoute{authMiddleware, userHandler}
 }
 
 func (ur *UserRoute) Init(route *gin.Engine) {

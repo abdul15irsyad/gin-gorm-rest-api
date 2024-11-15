@@ -18,7 +18,7 @@ func main() {
 	seeders.UserSeeder(databaseConfig.DB)
 	log.Println("all seeders executed")
 
-	sqlDB, _ := databaseConfig.DB.DB()
-	sqlDB.Close()
+	db, _ := databaseConfig.DB.DB()
+	db.Close()
 	os.Exit(0)
 }

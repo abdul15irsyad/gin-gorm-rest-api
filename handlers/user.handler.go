@@ -21,7 +21,7 @@ type UserHandler struct {
 }
 
 func NewUserHandler(userService *services.UserService, databaseConfig *configs.DatabaseConfig) *UserHandler {
-	return &UserHandler{userService: userService, databaseConfig: databaseConfig}
+	return &UserHandler{userService, databaseConfig}
 }
 
 func (uh *UserHandler) GetAllUsers(ctx *gin.Context) {
