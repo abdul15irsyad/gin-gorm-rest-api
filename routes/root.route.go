@@ -1,19 +1,19 @@
 package routes
 
 import (
-	"gin-gorm-rest-api/controllers"
+	"gin-gorm-rest-api/handlers"
 
 	"github.com/gin-gonic/gin"
 )
 
 type RootRoute struct {
-	rootController *controllers.RootController
+	rootHandler *handlers.RootHandler
 }
 
-func NewRootRoute(rootController *controllers.RootController) *RootRoute {
-	return &RootRoute{rootController: rootController}
+func NewRootRoute(rootHandler *handlers.RootHandler) *RootRoute {
+	return &RootRoute{rootHandler: rootHandler}
 }
 
 func (rr *RootRoute) Init(route *gin.Engine) {
-	route.GET("/", rr.rootController.Root)
+	route.GET("/", rr.rootHandler.Root)
 }

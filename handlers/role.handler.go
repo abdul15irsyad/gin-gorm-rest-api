@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
@@ -16,16 +16,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type RoleController struct {
+type RoleHandler struct {
 	roleService    *services.RoleService
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewRoleController(roleService *services.RoleService, databaseConfig *config.DatabaseConfig) *RoleController {
-	return &RoleController{roleService: roleService, databaseConfig: databaseConfig}
+func NewRoleHandler(roleService *services.RoleService, databaseConfig *configs.DatabaseConfig) *RoleHandler {
+	return &RoleHandler{roleService: roleService, databaseConfig: databaseConfig}
 }
 
-func (rc *RoleController) GetAllRoles(ctx *gin.Context) {
+func (rc *RoleHandler) GetAllRoles(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -54,9 +54,9 @@ func (rc *RoleController) GetAllRoles(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleController) GetRole(ctx *gin.Context) {
+func (rc *RoleHandler) GetRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getRoleDto dto.GetRoleDto
+	var getRoleDto dtos.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
 	getRoleDto.Id = paramId
 	validationErrors := utils.Validate(getRoleDto)
@@ -83,8 +83,8 @@ func (rc *RoleController) GetRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleController) CreateRole(ctx *gin.Context) {
-	var createRoleDto dto.CreateRoleDto
+func (rc *RoleHandler) CreateRole(ctx *gin.Context) {
+	var createRoleDto dtos.CreateRoleDto
 	ctx.ShouldBind(&createRoleDto)
 	validationErrors := utils.Validate(createRoleDto)
 	// check is name unique in database
@@ -95,7 +95,7 @@ func (rc *RoleController) CreateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := rc.roleService.GetRoleBy(dto.GetDataByOptions{
+		_, err := rc.roleService.GetRoleBy(dtos.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(createRoleDto.Name),
 			ExcludeId: nil,
@@ -140,9 +140,9 @@ func (rc *RoleController) CreateRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleController) UpdateRole(ctx *gin.Context) {
+func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var updateRoleDto dto.UpdateRoleDto
+	var updateRoleDto dtos.UpdateRoleDto
 	ctx.ShouldBind(&updateRoleDto)
 	updateRoleDto.Id = paramId
 	validationErrors := utils.Validate(updateRoleDto)
@@ -154,7 +154,7 @@ func (rc *RoleController) UpdateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := rc.roleService.GetRoleBy(dto.GetDataByOptions{
+		_, err := rc.roleService.GetRoleBy(dtos.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(updateRoleDto.Name),
 			ExcludeId: &updateRoleDto.Id,
@@ -197,9 +197,9 @@ func (rc *RoleController) UpdateRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleController) DeleteRole(ctx *gin.Context) {
+func (rc *RoleHandler) DeleteRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getRoleDto dto.GetRoleDto
+	var getRoleDto dtos.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
 	getRoleDto.Id = paramId
 	validationErrors := utils.Validate(getRoleDto)

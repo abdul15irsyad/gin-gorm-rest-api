@@ -1,9 +1,9 @@
-// Example markdownlint configuration with all properties set to their default value
+// Example markdownlint configsuration with all properties set to their default value
 {
   // Default state for all rules
   "default": true,
 
-  // Path to configuration file to extend
+  // Path to configsuration file to extend
   "extends": null,
 
   // MD001/heading-increment : Heading levels should only increment by one level at a time : https://github.com/DavidAnson/markdownlint/blob/v0.35.0/doc/md001.md

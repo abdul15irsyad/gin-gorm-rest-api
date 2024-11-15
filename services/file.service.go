@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"gin-gorm-rest-api/config"
+	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"math"
@@ -17,10 +17,10 @@ import (
 )
 
 type FileService struct {
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewFileService(databaseConfig *config.DatabaseConfig) *FileService {
+func NewFileService(databaseConfig *configs.DatabaseConfig) *FileService {
 	return &FileService{databaseConfig: databaseConfig}
 }
 

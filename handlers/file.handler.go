@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
@@ -14,18 +14,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type FileController struct {
+type FileHandler struct {
 	fileService    *services.FileService
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewFileController(fileService *services.FileService, databaseConfig *config.DatabaseConfig) *FileController {
-	return &FileController{fileService: fileService, databaseConfig: databaseConfig}
+func NewFileHandler(fileService *services.FileService, databaseConfig *configs.DatabaseConfig) *FileHandler {
+	return &FileHandler{fileService: fileService, databaseConfig: databaseConfig}
 }
 
-func (fc *FileController) GetFile(ctx *gin.Context) {
+func (fc *FileHandler) GetFile(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getFileDto dto.GetFileDto
+	var getFileDto dtos.GetFileDto
 	ctx.ShouldBind(&getFileDto)
 	getFileDto.Id = paramId
 	validationErrors := utils.Validate(getFileDto)
@@ -52,7 +52,7 @@ func (fc *FileController) GetFile(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileController) GetAllFiles(ctx *gin.Context) {
+func (fc *FileHandler) GetAllFiles(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -81,7 +81,7 @@ func (fc *FileController) GetAllFiles(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileController) CreateFile(ctx *gin.Context) {
+func (fc *FileHandler) CreateFile(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
@@ -107,9 +107,9 @@ func (fc *FileController) CreateFile(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileController) DeleteFile(ctx *gin.Context) {
+func (fc *FileHandler) DeleteFile(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getFileDto dto.GetFileDto
+	var getFileDto dtos.GetFileDto
 	ctx.ShouldBind(&getFileDto)
 	getFileDto.Id = paramId
 	validationErrors := utils.Validate(getFileDto)

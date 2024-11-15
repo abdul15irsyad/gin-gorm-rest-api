@@ -1,4 +1,4 @@
-package dto
+package dtos
 
 type GetDataByOptions struct {
 	Field     string

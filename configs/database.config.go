@@ -1,4 +1,4 @@
-package config
+package configs
 
 import (
 	"gin-gorm-rest-api/models"

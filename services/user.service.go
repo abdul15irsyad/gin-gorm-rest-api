@@ -1,8 +1,8 @@
 package services
 
 import (
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/models"
 	"math"
 
@@ -11,10 +11,10 @@ import (
 )
 
 type UserService struct {
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewUserService(databaseConfig *config.DatabaseConfig) *UserService {
+func NewUserService(databaseConfig *configs.DatabaseConfig) *UserService {
 	return &UserService{databaseConfig: databaseConfig}
 }
 
@@ -28,7 +28,7 @@ func (us *UserService) GetUser(id uuid.UUID) (models.User, error) {
 	return user, nil
 }
 
-func (us *UserService) GetUserBy(options dto.GetDataByOptions) (models.User, error) {
+func (us *UserService) GetUserBy(options dtos.GetDataByOptions) (models.User, error) {
 	var user models.User
 	query := us.databaseConfig.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
 	if options.ExcludeId != nil {

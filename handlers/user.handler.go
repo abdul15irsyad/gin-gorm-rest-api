@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
@@ -15,16 +15,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserController struct {
+type UserHandler struct {
 	userService    *services.UserService
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewUserController(userService *services.UserService, databaseConfig *config.DatabaseConfig) *UserController {
-	return &UserController{userService: userService, databaseConfig: databaseConfig}
+func NewUserHandler(userService *services.UserService, databaseConfig *configs.DatabaseConfig) *UserHandler {
+	return &UserHandler{userService: userService, databaseConfig: databaseConfig}
 }
 
-func (uc *UserController) GetAllUsers(ctx *gin.Context) {
+func (uc *UserHandler) GetAllUsers(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -53,9 +53,9 @@ func (uc *UserController) GetAllUsers(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserController) GetUser(ctx *gin.Context) {
+func (uc *UserHandler) GetUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getUserDto dto.GetUserDto
+	var getUserDto dtos.GetUserDto
 	ctx.ShouldBind(&getUserDto)
 	getUserDto.Id = paramId
 	validationErrors := utils.Validate(getUserDto)
@@ -82,8 +82,8 @@ func (uc *UserController) GetUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserController) CreateUser(ctx *gin.Context) {
-	var createUserDto dto.CreateUserDto
+func (uc *UserHandler) CreateUser(ctx *gin.Context) {
+	var createUserDto dtos.CreateUserDto
 	ctx.ShouldBind(&createUserDto)
 	validationErrors := utils.Validate(createUserDto)
 	// check is email unique in database
@@ -94,7 +94,7 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := uc.userService.GetUserBy(dto.GetDataByOptions{
+		_, err := uc.userService.GetUserBy(dtos.GetDataByOptions{
 			Field:     "email",
 			Value:     createUserDto.Email,
 			ExcludeId: nil,
@@ -154,9 +154,9 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserController) UpdateUser(ctx *gin.Context) {
+func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var updateUserDto dto.UpdateUserDto
+	var updateUserDto dtos.UpdateUserDto
 	ctx.ShouldBind(&updateUserDto)
 	updateUserDto.Id = paramId
 	validationErrors := utils.Validate(updateUserDto)
@@ -168,7 +168,7 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := uc.userService.GetUserBy(dto.GetDataByOptions{
+		_, err := uc.userService.GetUserBy(dtos.GetDataByOptions{
 			Field:     "email",
 			Value:     updateUserDto.Email,
 			ExcludeId: &updateUserDto.Id,
@@ -222,9 +222,9 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserController) DeleteUser(ctx *gin.Context) {
+func (uc *UserHandler) DeleteUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
-	var getUserDto dto.GetUserDto
+	var getUserDto dtos.GetUserDto
 	ctx.ShouldBind(&getUserDto)
 	getUserDto.Id = paramId
 	validationErrors := utils.Validate(getUserDto)

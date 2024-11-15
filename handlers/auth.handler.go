@@ -1,9 +1,9 @@
-package controllers
+package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/middlewares"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
@@ -17,19 +17,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthController struct {
+type AuthHandler struct {
 	jwtService     *services.JwtService
 	userService    *services.UserService
 	authMiddleware *middlewares.AuthMiddleware
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewAuthController(jwtService *services.JwtService, userService *services.UserService, databaseConfig *config.DatabaseConfig) *AuthController {
-	return &AuthController{jwtService: jwtService, userService: userService, databaseConfig: databaseConfig}
+func NewAuthHandler(jwtService *services.JwtService, userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthHandler {
+	return &AuthHandler{jwtService: jwtService, userService: userService, databaseConfig: databaseConfig}
 }
 
-func (ac *AuthController) Login(ctx *gin.Context) {
-	var loginDto dto.LoginDto
+func (ac *AuthHandler) Login(ctx *gin.Context) {
+	var loginDto dtos.LoginDto
 	ctx.ShouldBind(&loginDto)
 	validationErrors := utils.Validate(loginDto)
 	if len(validationErrors) > 0 {
@@ -82,8 +82,8 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthController) Register(ctx *gin.Context) {
-	var registerDto dto.RegisterDto
+func (ac *AuthHandler) Register(ctx *gin.Context) {
+	var registerDto dtos.RegisterDto
 	ctx.ShouldBind(&registerDto)
 	validationErrors := utils.Validate(registerDto)
 	if len(validationErrors) > 0 {
@@ -119,7 +119,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthController) RefreshToken(ctx *gin.Context) {
+func (ac *AuthHandler) RefreshToken(ctx *gin.Context) {
 	authUser, ok := ac.authMiddleware.GetAuthUserFromAuthorization(ctx, "refresh")
 	if !ok {
 		return
@@ -141,9 +141,9 @@ func (ac *AuthController) RefreshToken(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
+func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
 	// get request body
-	var forgotPassword dto.ForgotPasswordDto
+	var forgotPassword dtos.ForgotPasswordDto
 	ctx.ShouldBind(&forgotPassword)
 	validationErrors := utils.Validate(forgotPassword)
 	if len(validationErrors) > 0 {
@@ -155,7 +155,7 @@ func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
 	}
 
 	// check user
-	user, err := ac.userService.GetUserBy(dto.GetDataByOptions{
+	user, err := ac.userService.GetUserBy(dtos.GetDataByOptions{
 		Field:     "email",
 		Value:     forgotPassword.Email,
 		ExcludeId: nil,
@@ -222,7 +222,7 @@ func (ac *AuthController) ForgotPassword(ctx *gin.Context) {
 	}
 }
 
-func (ac *AuthController) ResetPassword(ctx *gin.Context) {
+func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
 	tokenString := ctx.Query("token")
 	if tokenString == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -253,7 +253,7 @@ func (ac *AuthController) ResetPassword(ctx *gin.Context) {
 	}
 
 	// get request body
-	var resetPassword dto.ResetPasswordDto
+	var resetPassword dtos.ResetPasswordDto
 	ctx.ShouldBind(&resetPassword)
 	validationErrors := utils.Validate(resetPassword)
 	if len(validationErrors) > 0 {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/database/seeders"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/seeders"
 	"log"
 	"os"
 
@@ -11,7 +11,7 @@ import (
 
 func main() {
 	godotenv.Load(".env")
-	databaseConfig := config.NewDatabaseConfig()
+	databaseConfig := configs.NewDatabaseConfig()
 
 	seeders.FileSeeder(databaseConfig.DB)
 	seeders.RoleSeeder(databaseConfig.DB)

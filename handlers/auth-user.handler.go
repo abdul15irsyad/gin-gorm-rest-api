@@ -1,8 +1,8 @@
-package controllers
+package handlers
 
 import (
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
@@ -11,16 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthUserController struct {
+type AuthUserHandler struct {
 	userService    *services.UserService
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewAuthUserController(userService *services.UserService, databaseConfig *config.DatabaseConfig) *AuthUserController {
-	return &AuthUserController{userService: userService, databaseConfig: databaseConfig}
+func NewAuthUserHandler(userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthUserHandler {
+	return &AuthUserHandler{userService: userService, databaseConfig: databaseConfig}
 }
 
-func (auc *AuthUserController) AuthUser(ctx *gin.Context) {
+func (auc *AuthUserHandler) AuthUser(ctx *gin.Context) {
 	authUser, _ := ctx.Get("authUser")
 	user := authUser.(models.User)
 	ctx.JSON(http.StatusOK, gin.H{
@@ -29,8 +29,8 @@ func (auc *AuthUserController) AuthUser(ctx *gin.Context) {
 	})
 }
 
-func (auc *AuthUserController) UpdateAuthUser(ctx *gin.Context) {
-	var updateAuthUserDto dto.UpdateAuthUserDto
+func (auc *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
+	var updateAuthUserDto dtos.UpdateAuthUserDto
 	ctx.ShouldBind(&updateAuthUserDto)
 	validationErrors := utils.Validate(updateAuthUserDto)
 	if len(validationErrors) > 0 {
@@ -54,8 +54,8 @@ func (auc *AuthUserController) UpdateAuthUser(ctx *gin.Context) {
 	})
 }
 
-func (auc *AuthUserController) UpdateAuthUserPassword(ctx *gin.Context) {
-	var updateAuthUserPasswordDto dto.UpdateAuthUserPasswordDto
+func (auc *AuthUserHandler) UpdateAuthUserPassword(ctx *gin.Context) {
+	var updateAuthUserPasswordDto dtos.UpdateAuthUserPasswordDto
 	ctx.ShouldBind(&updateAuthUserPasswordDto)
 	validationErrors := utils.Validate(updateAuthUserPasswordDto)
 	if len(validationErrors) > 0 {

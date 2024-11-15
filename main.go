@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/controllers"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/handlers"
 	"gin-gorm-rest-api/middlewares"
 	"gin-gorm-rest-api/routes"
 	"gin-gorm-rest-api/services"
@@ -65,8 +65,8 @@ func ProvideMultiple(container *dig.Container, constructors []interface{}) error
 func InitRoutes(router *gin.Engine) []Route {
 	container := dig.New()
 	if err := ProvideMultiple(container, []interface{}{
-		// config
-		config.NewDatabaseConfig,
+		// configs
+		configs.NewDatabaseConfig,
 		// middlewares
 		middlewares.NewAuthMiddleware,
 		// services
@@ -74,13 +74,13 @@ func InitRoutes(router *gin.Engine) []Route {
 		services.NewJwtService,
 		services.NewRoleService,
 		services.NewUserService,
-		// controllers
-		controllers.NewAuthUserController,
-		controllers.NewAuthController,
-		controllers.NewFileController,
-		controllers.NewRoleController,
-		controllers.NewRootController,
-		controllers.NewUserController,
+		// handlers
+		handlers.NewAuthUserHandler,
+		handlers.NewAuthHandler,
+		handlers.NewFileHandler,
+		handlers.NewRoleHandler,
+		handlers.NewRootHandler,
+		handlers.NewUserHandler,
 		// routes
 		routes.NewAuthRoute,
 		routes.NewFileRoute,

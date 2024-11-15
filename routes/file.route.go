@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"gin-gorm-rest-api/controllers"
+	"gin-gorm-rest-api/handlers"
 	"gin-gorm-rest-api/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -9,17 +9,17 @@ import (
 
 type FileRoute struct {
 	authMiddleware *middlewares.AuthMiddleware
-	fileController *controllers.FileController
+	fileHandler    *handlers.FileHandler
 }
 
-func NewFileRoute(authMiddleware *middlewares.AuthMiddleware, fileController *controllers.FileController) *FileRoute {
-	return &FileRoute{authMiddleware: authMiddleware, fileController: fileController}
+func NewFileRoute(authMiddleware *middlewares.AuthMiddleware, fileHandler *handlers.FileHandler) *FileRoute {
+	return &FileRoute{authMiddleware: authMiddleware, fileHandler: fileHandler}
 }
 
 func (fr *FileRoute) Init(route *gin.Engine) {
 	fileRoute := route.Group("/files", fr.authMiddleware.Auth)
-	fileRoute.GET("/", fr.fileController.GetAllFiles)
-	fileRoute.GET("/:id", fr.fileController.GetFile)
-	fileRoute.POST("/", fr.fileController.CreateFile)
-	fileRoute.DELETE("/:id", fr.fileController.DeleteFile)
+	fileRoute.GET("/", fr.fileHandler.GetAllFiles)
+	fileRoute.GET("/:id", fr.fileHandler.GetFile)
+	fileRoute.POST("/", fr.fileHandler.CreateFile)
+	fileRoute.DELETE("/:id", fr.fileHandler.DeleteFile)
 }

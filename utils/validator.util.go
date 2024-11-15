@@ -11,10 +11,10 @@ type ErrorResponse struct {
 	Value   interface{} `json:"value"`
 }
 
-func Validate(dto interface{}) []ErrorResponse {
+func Validate(dtos interface{}) []ErrorResponse {
 	var validate = validator.New(validator.WithRequiredStructEnabled())
 	errors := []ErrorResponse{}
-	err := validate.Struct(dto)
+	err := validate.Struct(dtos)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			errorResponse := ErrorResponse{

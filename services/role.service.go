@@ -1,8 +1,8 @@
 package services
 
 import (
-	"gin-gorm-rest-api/config"
-	"gin-gorm-rest-api/dto"
+	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/models"
 	"math"
 
@@ -11,10 +11,10 @@ import (
 )
 
 type RoleService struct {
-	databaseConfig *config.DatabaseConfig
+	databaseConfig *configs.DatabaseConfig
 }
 
-func NewRoleService(databaseConfig *config.DatabaseConfig) *RoleService {
+func NewRoleService(databaseConfig *configs.DatabaseConfig) *RoleService {
 	return &RoleService{databaseConfig: databaseConfig}
 }
 
@@ -27,7 +27,7 @@ func (rs *RoleService) GetRole(id uuid.UUID) (models.Role, error) {
 	return role, nil
 }
 
-func (rs *RoleService) GetRoleBy(options dto.GetDataByOptions) (models.Role, error) {
+func (rs *RoleService) GetRoleBy(options dtos.GetDataByOptions) (models.Role, error) {
 	var role models.Role
 	query := rs.databaseConfig.DB.Preload(clause.Associations).Where(options.Field+" = ?", options.Value)
 	if options.ExcludeId != nil {

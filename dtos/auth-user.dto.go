@@ -1,4 +1,4 @@
-package dto
+package dtos
 
 type UpdateAuthUserDto struct {
 	Name  string `json:"name" form:"name" validate:"required"`

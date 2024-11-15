@@ -24,7 +24,7 @@ project for learning golang with gin framework and gorm as ORM
    go mod download
    ```
 
-3. configure environment, copy from `.env.example` to `.env` and adjust to your
+3. configsure environment, copy from `.env.example` to `.env` and adjust to your
    setup like database, port, jwt secret, etc.
 
    ```bash
