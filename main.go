@@ -72,6 +72,7 @@ func InitRoutes(router *gin.Engine) []Route {
 		// services
 		services.NewFileService,
 		services.NewJwtService,
+		services.NewMailService,
 		services.NewRoleService,
 		services.NewUserService,
 		// handlers

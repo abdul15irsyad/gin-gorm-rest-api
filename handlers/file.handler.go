@@ -23,7 +23,7 @@ func NewFileHandler(fileService *services.FileService, databaseConfig *configs.D
 	return &FileHandler{fileService: fileService, databaseConfig: databaseConfig}
 }
 
-func (fc *FileHandler) GetFile(ctx *gin.Context) {
+func (fh *FileHandler) GetFile(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getFileDto dtos.GetFileDto
 	ctx.ShouldBind(&getFileDto)
@@ -38,7 +38,7 @@ func (fc *FileHandler) GetFile(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	file, err := fc.fileService.GetFile(id)
+	file, err := fh.fileService.GetFile(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -52,7 +52,7 @@ func (fc *FileHandler) GetFile(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileHandler) GetAllFiles(ctx *gin.Context) {
+func (fh *FileHandler) GetAllFiles(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -62,7 +62,7 @@ func (fc *FileHandler) GetAllFiles(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	files, total, totalPage, err := fc.fileService.GetPaginatedFiles(page, limit, &search)
+	files, total, totalPage, err := fh.fileService.GetPaginatedFiles(page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -81,7 +81,7 @@ func (fc *FileHandler) GetAllFiles(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileHandler) CreateFile(ctx *gin.Context) {
+func (fh *FileHandler) CreateFile(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
@@ -96,7 +96,7 @@ func (fc *FileHandler) CreateFile(ctx *gin.Context) {
 		return
 	}
 
-	newFile, ok := fc.fileService.UploadAndCreateFile(ctx, file)
+	newFile, ok := fh.fileService.UploadAndCreateFile(ctx, file)
 	if !ok {
 		return
 	}
@@ -107,7 +107,7 @@ func (fc *FileHandler) CreateFile(ctx *gin.Context) {
 	})
 }
 
-func (fc *FileHandler) DeleteFile(ctx *gin.Context) {
+func (fh *FileHandler) DeleteFile(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getFileDto dtos.GetFileDto
 	ctx.ShouldBind(&getFileDto)
@@ -122,7 +122,7 @@ func (fc *FileHandler) DeleteFile(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	file, err := fc.fileService.GetFile(id)
+	file, err := fh.fileService.GetFile(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -130,7 +130,7 @@ func (fc *FileHandler) DeleteFile(ctx *gin.Context) {
 		return
 	}
 
-	fc.databaseConfig.DB.Delete(&file)
+	fh.databaseConfig.DB.Delete(&file)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete file",

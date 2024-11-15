@@ -13,7 +13,7 @@ func RandomSlice[T any](array []T) T {
 
 // shuffle an array/slice
 //
-//	utils.ShuffleSlice([]string{"element1", "element2","element3"})
+//	ShuffleSlice([]string{"element1", "element2","element3"})
 func ShuffleSlice[T any](array []T) []T {
 	for i := range array {
 		j := RandomInt(0, len(array)-1)

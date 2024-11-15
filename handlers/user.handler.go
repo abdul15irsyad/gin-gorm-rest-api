@@ -24,7 +24,7 @@ func NewUserHandler(userService *services.UserService, databaseConfig *configs.D
 	return &UserHandler{userService: userService, databaseConfig: databaseConfig}
 }
 
-func (uc *UserHandler) GetAllUsers(ctx *gin.Context) {
+func (uh *UserHandler) GetAllUsers(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -34,7 +34,7 @@ func (uc *UserHandler) GetAllUsers(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	users, total, totalPage, err := uc.userService.GetPaginatedUsers(page, limit, &search)
+	users, total, totalPage, err := uh.userService.GetPaginatedUsers(page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -53,7 +53,7 @@ func (uc *UserHandler) GetAllUsers(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserHandler) GetUser(ctx *gin.Context) {
+func (uh *UserHandler) GetUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getUserDto dtos.GetUserDto
 	ctx.ShouldBind(&getUserDto)
@@ -68,7 +68,7 @@ func (uc *UserHandler) GetUser(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	user, err := uc.userService.GetUser(id)
+	user, err := uh.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -82,7 +82,7 @@ func (uc *UserHandler) GetUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserHandler) CreateUser(ctx *gin.Context) {
+func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 	var createUserDto dtos.CreateUserDto
 	ctx.ShouldBind(&createUserDto)
 	validationErrors := utils.Validate(createUserDto)
@@ -94,7 +94,7 @@ func (uc *UserHandler) CreateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := uc.userService.GetUserBy(dtos.GetDataByOptions{
+		_, err := uh.userService.GetUserBy(dtos.GetDataByOptions{
 			Field:     "email",
 			Value:     createUserDto.Email,
 			ExcludeId: nil,
@@ -136,17 +136,17 @@ func (uc *UserHandler) CreateUser(ctx *gin.Context) {
 		BaseModel: models.BaseModel{Id: randomUuid},
 		Name:      createUserDto.Name,
 		Email:     createUserDto.Email,
-		Password:  string(hashedPassword),
+		Password:  hashedPassword,
 		RoleId:    roleId,
 	}
-	result := uc.databaseConfig.DB.Save(&user)
+	result := uh.databaseConfig.DB.Save(&user)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
 		})
 		return
 	}
-	user, _ = uc.userService.GetUser(user.Id)
+	user, _ = uh.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create user",
@@ -154,7 +154,7 @@ func (uc *UserHandler) CreateUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
+func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var updateUserDto dtos.UpdateUserDto
 	ctx.ShouldBind(&updateUserDto)
@@ -168,7 +168,7 @@ func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
 		}
 	}
 	if !emailErrorExists {
-		_, err := uc.userService.GetUserBy(dtos.GetDataByOptions{
+		_, err := uh.userService.GetUserBy(dtos.GetDataByOptions{
 			Field:     "email",
 			Value:     updateUserDto.Email,
 			ExcludeId: &updateUserDto.Id,
@@ -192,7 +192,7 @@ func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
 
 	// save to database
 	id, _ := uuid.Parse(paramId)
-	user, err := uc.userService.GetUser(id)
+	user, err := uh.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -211,10 +211,10 @@ func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
 			})
 			return
 		}
-		user.Password = string(hashedPassword)
+		user.Password = hashedPassword
 	}
-	uc.databaseConfig.DB.Save(&user)
-	user, _ = uc.userService.GetUser(user.Id)
+	uh.databaseConfig.DB.Save(&user)
+	user, _ = uh.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update user",
@@ -222,7 +222,7 @@ func (uc *UserHandler) UpdateUser(ctx *gin.Context) {
 	})
 }
 
-func (uc *UserHandler) DeleteUser(ctx *gin.Context) {
+func (uh *UserHandler) DeleteUser(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getUserDto dtos.GetUserDto
 	ctx.ShouldBind(&getUserDto)
@@ -237,7 +237,7 @@ func (uc *UserHandler) DeleteUser(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	user, err := uc.userService.GetUser(id)
+	user, err := uh.userService.GetUser(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -245,7 +245,7 @@ func (uc *UserHandler) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	uc.databaseConfig.DB.Delete(&user)
+	uh.databaseConfig.DB.Delete(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete user",

@@ -4,9 +4,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HashPassword(password string) ([]byte, error) {
+func HashPassword(password string) (string, error) {
 	cost := bcrypt.DefaultCost // Adjust cost as needed (higher = more secure, slower)
-	return bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	return string(hashedPassword), err
 }
 
 func ComparePassword(hashedPassword string, password string) (bool, error) {

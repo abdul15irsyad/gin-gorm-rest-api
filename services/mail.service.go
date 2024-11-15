@@ -1,4 +1,4 @@
-package utils
+package services
 
 import (
 	"os"
@@ -7,6 +7,12 @@ import (
 	gomail "github.com/go-mail/mail"
 )
 
+type MailService struct{}
+
+func NewMailService() *MailService {
+	return &MailService{}
+}
+
 type SendMailOptions struct {
 	To            string
 	Subject       string
@@ -14,7 +20,7 @@ type SendMailOptions struct {
 	AttachmentURL *string
 }
 
-func SendMail(options SendMailOptions) error {
+func (ms *MailService) SendMail(options SendMailOptions) error {
 	APP_NAME := os.Getenv("APP_NAME")
 	SMTP_HOST := os.Getenv("SMTP_HOST")
 	SMTP_PORT, _ := strconv.Atoi(os.Getenv("SMTP_PORT"))

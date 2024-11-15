@@ -39,7 +39,7 @@ func UserSeeder(DB *gorm.DB) {
 		BaseModel: models.BaseModel{Id: newUuid},
 		Name:      "irsyad",
 		Email:     "irsyad@email.com",
-		Password:  string(hashedPassword),
+		Password:  hashedPassword,
 		ImageId:   &images[0].Id,
 		RoleId:    administratorRoleId,
 	}
@@ -50,7 +50,7 @@ func UserSeeder(DB *gorm.DB) {
 		BaseModel: models.BaseModel{Id: newUuid},
 		Name:      "abdul",
 		Email:     "abdul@email.com",
-		Password:  string(hashedPassword),
+		Password:  hashedPassword,
 		ImageId:   &images[2].Id,
 		RoleId:    userRoleId,
 	}
@@ -65,7 +65,7 @@ func UserSeeder(DB *gorm.DB) {
 			BaseModel: models.BaseModel{Id: randomUuid},
 			Name:      name,
 			Email:     strings.ReplaceAll(slug.Make(name), "-", "") + "@email.com",
-			Password:  string(hashedPassword),
+			Password:  hashedPassword,
 			RoleId:    userRoleId,
 		}
 		if utils.RandomSlice([]bool{true, false}) {

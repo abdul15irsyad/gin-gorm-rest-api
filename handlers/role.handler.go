@@ -25,7 +25,7 @@ func NewRoleHandler(roleService *services.RoleService, databaseConfig *configs.D
 	return &RoleHandler{roleService: roleService, databaseConfig: databaseConfig}
 }
 
-func (rc *RoleHandler) GetAllRoles(ctx *gin.Context) {
+func (rh *RoleHandler) GetAllRoles(ctx *gin.Context) {
 	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil || page <= 0 {
 		page = 1
@@ -35,7 +35,7 @@ func (rc *RoleHandler) GetAllRoles(ctx *gin.Context) {
 		limit = 10
 	}
 	search := ctx.Query("search")
-	roles, total, totalPage, err := rc.roleService.GetPaginatedRoles(page, limit, &search)
+	roles, total, totalPage, err := rh.roleService.GetPaginatedRoles(page, limit, &search)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -54,7 +54,7 @@ func (rc *RoleHandler) GetAllRoles(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleHandler) GetRole(ctx *gin.Context) {
+func (rh *RoleHandler) GetRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getRoleDto dtos.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
@@ -69,7 +69,7 @@ func (rc *RoleHandler) GetRole(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	role, err := rc.roleService.GetRole(id)
+	role, err := rh.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -83,7 +83,7 @@ func (rc *RoleHandler) GetRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleHandler) CreateRole(ctx *gin.Context) {
+func (rh *RoleHandler) CreateRole(ctx *gin.Context) {
 	var createRoleDto dtos.CreateRoleDto
 	ctx.ShouldBind(&createRoleDto)
 	validationErrors := utils.Validate(createRoleDto)
@@ -95,7 +95,7 @@ func (rc *RoleHandler) CreateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := rc.roleService.GetRoleBy(dtos.GetDataByOptions{
+		_, err := rh.roleService.GetRoleBy(dtos.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(createRoleDto.Name),
 			ExcludeId: nil,
@@ -131,8 +131,8 @@ func (rc *RoleHandler) CreateRole(ctx *gin.Context) {
 		Slug:      slug.Make(createRoleDto.Name),
 		Desc:      createRoleDto.Desc,
 	}
-	rc.databaseConfig.DB.Save(&role)
-	role, _ = rc.roleService.GetRole(role.Id)
+	rh.databaseConfig.DB.Save(&role)
+	role, _ = rh.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create role",
@@ -140,7 +140,7 @@ func (rc *RoleHandler) CreateRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
+func (rh *RoleHandler) UpdateRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var updateRoleDto dtos.UpdateRoleDto
 	ctx.ShouldBind(&updateRoleDto)
@@ -154,7 +154,7 @@ func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
 		}
 	}
 	if !nameErrorExists {
-		_, err := rc.roleService.GetRoleBy(dtos.GetDataByOptions{
+		_, err := rh.roleService.GetRoleBy(dtos.GetDataByOptions{
 			Field:     "slug",
 			Value:     slug.Make(updateRoleDto.Name),
 			ExcludeId: &updateRoleDto.Id,
@@ -178,7 +178,7 @@ func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
 
 	// save to database
 	id, _ := uuid.Parse(paramId)
-	role, err := rc.roleService.GetRole(id)
+	role, err := rh.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -188,8 +188,8 @@ func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
 	role.Name = updateRoleDto.Name
 	role.Slug = slug.Make(updateRoleDto.Name)
 	role.Desc = updateRoleDto.Desc
-	rc.databaseConfig.DB.Save(&role)
-	role, _ = rc.roleService.GetRole(role.Id)
+	rh.databaseConfig.DB.Save(&role)
+	role, _ = rh.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update role",
@@ -197,7 +197,7 @@ func (rc *RoleHandler) UpdateRole(ctx *gin.Context) {
 	})
 }
 
-func (rc *RoleHandler) DeleteRole(ctx *gin.Context) {
+func (rh *RoleHandler) DeleteRole(ctx *gin.Context) {
 	paramId := ctx.Param("id")
 	var getRoleDto dtos.GetRoleDto
 	ctx.ShouldBind(&getRoleDto)
@@ -212,7 +212,7 @@ func (rc *RoleHandler) DeleteRole(ctx *gin.Context) {
 	}
 
 	id, _ := uuid.Parse(paramId)
-	role, err := rc.roleService.GetRole(id)
+	role, err := rh.roleService.GetRole(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"message": "data not found",
@@ -220,7 +220,7 @@ func (rc *RoleHandler) DeleteRole(ctx *gin.Context) {
 		return
 	}
 
-	rc.databaseConfig.DB.Delete(&role)
+	rh.databaseConfig.DB.Delete(&role)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete role",

@@ -19,16 +19,17 @@ import (
 
 type AuthHandler struct {
 	jwtService     *services.JwtService
+	mailService    *services.MailService
 	userService    *services.UserService
 	authMiddleware *middlewares.AuthMiddleware
 	databaseConfig *configs.DatabaseConfig
 }
 
-func NewAuthHandler(jwtService *services.JwtService, userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthHandler {
-	return &AuthHandler{jwtService: jwtService, userService: userService, databaseConfig: databaseConfig}
+func NewAuthHandler(jwtService *services.JwtService, mailService *services.MailService, userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthHandler {
+	return &AuthHandler{jwtService: jwtService, mailService: mailService, userService: userService, databaseConfig: databaseConfig}
 }
 
-func (ac *AuthHandler) Login(ctx *gin.Context) {
+func (ah *AuthHandler) Login(ctx *gin.Context) {
 	var loginDto dtos.LoginDto
 	ctx.ShouldBind(&loginDto)
 	validationErrors := utils.Validate(loginDto)
@@ -42,7 +43,7 @@ func (ac *AuthHandler) Login(ctx *gin.Context) {
 
 	// verify credential
 	var authUser models.User
-	result := ac.databaseConfig.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
+	result := ah.databaseConfig.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// for decoy
 		utils.ComparePassword("some password", loginDto.Password)
@@ -67,7 +68,7 @@ func (ac *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// signing jwt
-	accessToken, refreshToken, ok := ac.jwtService.SigningToken(ctx, authUser)
+	accessToken, refreshToken, ok := ah.jwtService.SigningToken(ctx, authUser)
 	if !ok {
 		return
 	}
@@ -82,7 +83,7 @@ func (ac *AuthHandler) Login(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthHandler) Register(ctx *gin.Context) {
+func (ah *AuthHandler) Register(ctx *gin.Context) {
 	var registerDto dtos.RegisterDto
 	ctx.ShouldBind(&registerDto)
 	validationErrors := utils.Validate(registerDto)
@@ -108,10 +109,10 @@ func (ac *AuthHandler) Register(ctx *gin.Context) {
 		BaseModel: models.BaseModel{Id: randomUuid},
 		Name:      registerDto.Name,
 		Email:     registerDto.Email,
-		Password:  string(hashedPassword),
+		Password:  hashedPassword,
 		RoleId:    userRoleId,
 	}
-	ac.databaseConfig.DB.Save(&user)
+	ah.databaseConfig.DB.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "register",
@@ -119,14 +120,14 @@ func (ac *AuthHandler) Register(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthHandler) RefreshToken(ctx *gin.Context) {
-	authUser, ok := ac.authMiddleware.GetAuthUserFromAuthorization(ctx, "refresh")
+func (ah *AuthHandler) RefreshToken(ctx *gin.Context) {
+	authUser, ok := ah.authMiddleware.GetAuthUserFromAuthorization(ctx, "refresh")
 	if !ok {
 		return
 	}
 
 	// signing jwt
-	accessToken, refreshToken, ok := ac.jwtService.SigningToken(ctx, authUser)
+	accessToken, refreshToken, ok := ah.jwtService.SigningToken(ctx, authUser)
 	if !ok {
 		return
 	}
@@ -141,7 +142,7 @@ func (ac *AuthHandler) RefreshToken(ctx *gin.Context) {
 	})
 }
 
-func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
+func (ah *AuthHandler) ForgotPassword(ctx *gin.Context) {
 	// get request body
 	var forgotPassword dtos.ForgotPasswordDto
 	ctx.ShouldBind(&forgotPassword)
@@ -155,7 +156,7 @@ func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
 	}
 
 	// check user
-	user, err := ac.userService.GetUserBy(dtos.GetDataByOptions{
+	user, err := ah.userService.GetUserBy(dtos.GetDataByOptions{
 		Field:     "email",
 		Value:     forgotPassword.Email,
 		ExcludeId: nil,
@@ -178,7 +179,7 @@ func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
 	for {
 		var token models.Token
 		randomString = utils.GenerateRandomString(64)
-		result := ac.databaseConfig.DB.Where("token = ?", randomString).First(&token)
+		result := ah.databaseConfig.DB.Where("token = ?", randomString).First(&token)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			break
 		}
@@ -191,18 +192,18 @@ func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
 		UserId:    user.Id,
 		ExpiredAt: time.Now().Add(time.Hour),
 	}
-	result := ac.databaseConfig.DB.Save(&token)
+	result := ah.databaseConfig.DB.Save(&token)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
 		})
 		return
 	}
-	token, _ = models.GetToken(ac.databaseConfig.DB, token.Id)
+	token, _ = models.GetToken(ah.databaseConfig.DB, token.Id)
 
 	// send link to reset password
 	url := os.Getenv("BASE_URL") + "/auth/reset-password?token=" + token.Token
-	go utils.SendMail(utils.SendMailOptions{
+	go ah.mailService.SendMail(services.SendMailOptions{
 		Subject: "Forgot Password",
 		To:      user.Email,
 		Message: "<a href=\"" + url + "\">" + url + "</a>",
@@ -222,7 +223,7 @@ func (ac *AuthHandler) ForgotPassword(ctx *gin.Context) {
 	}
 }
 
-func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
+func (ah *AuthHandler) ResetPassword(ctx *gin.Context) {
 	tokenString := ctx.Query("token")
 	if tokenString == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -231,7 +232,7 @@ func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
 		return
 	}
 	var token models.Token
-	result := ac.databaseConfig.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
+	result := ah.databaseConfig.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -265,7 +266,7 @@ func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
 	}
 
 	// change password in database
-	user, err := ac.userService.GetUser(token.UserId)
+	user, err := ah.userService.GetUser(token.UserId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -273,8 +274,8 @@ func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
 		return
 	}
 	hashedPassword, _ := utils.HashPassword(resetPassword.Password)
-	user.Password = string(hashedPassword)
-	result = ac.databaseConfig.DB.Save(&user)
+	user.Password = hashedPassword
+	result = ah.databaseConfig.DB.Save(&user)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
@@ -285,7 +286,7 @@ func (ac *AuthHandler) ResetPassword(ctx *gin.Context) {
 	// update token's used at so the token cannot be used twice or more
 	now := time.Now()
 	token.UsedAt = &now
-	result = ac.databaseConfig.DB.Save(&token)
+	result = ah.databaseConfig.DB.Save(&token)
 	if result.Error != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),

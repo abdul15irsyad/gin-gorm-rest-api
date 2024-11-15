@@ -20,7 +20,7 @@ func NewAuthUserHandler(userService *services.UserService, databaseConfig *confi
 	return &AuthUserHandler{userService: userService, databaseConfig: databaseConfig}
 }
 
-func (auc *AuthUserHandler) AuthUser(ctx *gin.Context) {
+func (auh *AuthUserHandler) AuthUser(ctx *gin.Context) {
 	authUser, _ := ctx.Get("authUser")
 	user := authUser.(models.User)
 	ctx.JSON(http.StatusOK, gin.H{
@@ -29,7 +29,7 @@ func (auc *AuthUserHandler) AuthUser(ctx *gin.Context) {
 	})
 }
 
-func (auc *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
+func (auh *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
 	var updateAuthUserDto dtos.UpdateAuthUserDto
 	ctx.ShouldBind(&updateAuthUserDto)
 	validationErrors := utils.Validate(updateAuthUserDto)
@@ -45,8 +45,8 @@ func (auc *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
 	user := authUser.(models.User)
 	user.Name = updateAuthUserDto.Name
 	user.Email = updateAuthUserDto.Email
-	auc.databaseConfig.DB.Save(&user)
-	user, _ = auc.userService.GetUser(user.Id)
+	auh.databaseConfig.DB.Save(&user)
+	user, _ = auh.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update auth user",
@@ -54,7 +54,7 @@ func (auc *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
 	})
 }
 
-func (auc *AuthUserHandler) UpdateAuthUserPassword(ctx *gin.Context) {
+func (auh *AuthUserHandler) UpdateAuthUserPassword(ctx *gin.Context) {
 	var updateAuthUserPasswordDto dtos.UpdateAuthUserPasswordDto
 	ctx.ShouldBind(&updateAuthUserPasswordDto)
 	validationErrors := utils.Validate(updateAuthUserPasswordDto)
@@ -88,8 +88,8 @@ func (auc *AuthUserHandler) UpdateAuthUserPassword(ctx *gin.Context) {
 		})
 		return
 	}
-	user.Password = string(hashedPassword)
-	auc.databaseConfig.DB.Save(&user)
+	user.Password = hashedPassword
+	auh.databaseConfig.DB.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update auth user password",
