@@ -24,7 +24,7 @@ func NewDatabaseConfig() *DatabaseConfig {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	} else {
 		log.Println("database connected")
 	}
@@ -40,7 +40,7 @@ func NewDatabaseConfig() *DatabaseConfig {
 	for _, model := range allModels {
 		err = db.AutoMigrate(&model)
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 	}
 
