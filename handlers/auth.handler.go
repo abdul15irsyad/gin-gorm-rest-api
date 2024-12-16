@@ -73,6 +73,8 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
+	ctx.SetCookie("accessToken", accessToken, 0, "/", "localhost", false, true)
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "login",
 		"data": gin.H{
@@ -80,6 +82,13 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 			"refreshToken": refreshToken,
 			"grantType":    "credential",
 		},
+	})
+}
+
+func (ah *AuthHandler) Logout(ctx *gin.Context) {
+	ctx.SetCookie("accessToken", "", -1, "/", "localhost", false, true)
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "logout",
 	})
 }
 

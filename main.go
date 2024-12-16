@@ -29,10 +29,11 @@ func main() {
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 20
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:  []string{"*"},
-		AllowMethods:  []string{"*"},
-		AllowHeaders:  []string{"*"},
-		AllowWildcard: true,
+		AllowOrigins:     []string{"http://localhost:3002"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type"},
+		AllowWildcard:    true,
+		AllowCredentials: true,
 	}))
 	router.SetTrustedProxies([]string{})
 	router.Static("/assets", "./assets")

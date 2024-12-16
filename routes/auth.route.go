@@ -21,6 +21,7 @@ func (ar *AuthRoute) Init(route *gin.Engine) {
 	// auth route
 	authRoute := route.Group("/auth")
 	authRoute.POST("/login", ar.authHandler.Login)
+	authRoute.POST("/logout", ar.authHandler.Logout)
 	authRoute.POST("/register", ar.authHandler.Register)
 	authRoute.GET("/refresh-token", ar.authHandler.RefreshToken)
 	authRoute.POST("/forgot-password", ar.authHandler.ForgotPassword)
