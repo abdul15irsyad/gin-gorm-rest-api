@@ -21,3 +21,12 @@ func ShuffleSlice[T any](array []T) []T {
 	}
 	return array
 }
+
+func Contains(slice []string, value string) bool {
+	for _, element := range slice {
+		if element == value {
+			return true
+		}
+	}
+	return false
+}

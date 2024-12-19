@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -25,4 +26,18 @@ func Slugify(text string) string {
 	text = re.ReplaceAllString(text, "-")
 
 	return text
+}
+
+func GetStructName[T any](dto T) string {
+	t := reflect.TypeOf(dto)
+
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	if t.Kind() != reflect.Struct {
+		return "Not a struct"
+	}
+
+	return t.Name()
 }

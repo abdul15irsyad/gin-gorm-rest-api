@@ -42,7 +42,10 @@ func (us *UserService) GetUserBy(options dtos.GetDataByOptions) (models.User, er
 	return user, nil
 }
 
-func (us *UserService) GetPaginatedUsers(page int, limit int, search *string) ([]models.User, int, float64, error) {
+func (us *UserService) GetPaginatedUsers(options dtos.GetUsersDto) ([]models.User, int, float64, error) {
+	page := *options.Page
+	limit := *options.Limit
+	search := options.Search
 	var users []models.User
 	offset := (page - 1) * limit
 
