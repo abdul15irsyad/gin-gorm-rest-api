@@ -2,10 +2,8 @@ package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/middlewares"
-	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
@@ -13,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -21,12 +18,20 @@ type AuthHandler struct {
 	jwtService     *services.JwtService
 	mailService    *services.MailService
 	userService    *services.UserService
+	roleService    *services.RoleService
+	tokenService   *services.TokenService
 	authMiddleware *middlewares.AuthMiddleware
-	databaseConfig *configs.DatabaseConfig
 }
 
-func NewAuthHandler(jwtService *services.JwtService, mailService *services.MailService, userService *services.UserService, authMiddleware *middlewares.AuthMiddleware, databaseConfig *configs.DatabaseConfig) *AuthHandler {
-	return &AuthHandler{jwtService, mailService, userService, authMiddleware, databaseConfig}
+func NewAuthHandler(
+	jwtService *services.JwtService,
+	mailService *services.MailService,
+	userService *services.UserService,
+	roleService *services.RoleService,
+	tokenService *services.TokenService,
+	authMiddleware *middlewares.AuthMiddleware,
+) *AuthHandler {
+	return &AuthHandler{jwtService, mailService, userService, roleService, tokenService, authMiddleware}
 }
 
 func (ah *AuthHandler) Login(ctx *gin.Context) {
@@ -42,15 +47,19 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// verify credential
-	var authUser models.User
-	result := ah.databaseConfig.DB.Select([]string{"id", "password"}).First(&authUser, "email = ?", loginDto.Email)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		// for decoy
-		utils.ComparePassword("some password", loginDto.Password)
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "email or password is incorrect",
+	authUser, err := ah.userService.GetUserCredential(loginDto.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// for decoy
+			utils.ComparePassword("some password", loginDto.Password)
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "email or password is incorrect",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
 		})
-		return
 	}
 
 	correctPassword, err := utils.ComparePassword(authUser.Password, loginDto.Password)
@@ -104,24 +113,23 @@ func (ah *AuthHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	// save to database
-	hashedPassword, _ := utils.HashPassword(registerDto.Password)
-	randomUuid, err := uuid.NewRandom()
+	userRole, _ := ah.roleService.GetRoleBy(dtos.GetDataByOptions{
+		Field: "name",
+		Value: "user",
+	})
+
+	user, err := ah.userService.CreateUser(dtos.CreateUserDto{
+		Name:     registerDto.Name,
+		Email:    registerDto.Email,
+		Password: registerDto.Password,
+		RoleId:   userRole.Id.String(),
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	userRoleId, _ := uuid.Parse("3ed4e622-4642-499a-b711-fb86a458f098")
-	user := models.User{
-		BaseModel: models.BaseModel{Id: randomUuid},
-		Name:      registerDto.Name,
-		Email:     registerDto.Email,
-		Password:  hashedPassword,
-		RoleId:    userRoleId,
-	}
-	ah.databaseConfig.DB.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "register",
@@ -183,32 +191,13 @@ func (ah *AuthHandler) ForgotPassword(ctx *gin.Context) {
 		return
 	}
 
-	// create token
-	var randomString string
-	for {
-		var token models.Token
-		randomString = utils.GenerateRandomString(64)
-		result := ah.databaseConfig.DB.Where("token = ?", randomString).First(&token)
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			break
-		}
-	}
-	randomUuid, _ := uuid.NewRandom()
-	token := models.Token{
-		BaseModel: models.BaseModel{Id: randomUuid},
-		Token:     randomString,
-		Type:      models.TokenForgotPassword,
-		UserId:    user.Id,
-		ExpiredAt: time.Now().Add(time.Hour),
-	}
-	result := ah.databaseConfig.DB.Save(&token)
-	if result.Error != nil {
+	token, err := ah.tokenService.CreateToken(user.Id)
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": result.Error.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
-	token, _ = models.GetToken(ah.databaseConfig.DB, token.Id)
 
 	// send link to reset password
 	url := os.Getenv("BASE_URL") + "/auth/reset-password?token=" + token.Token
@@ -240,17 +229,16 @@ func (ah *AuthHandler) ResetPassword(ctx *gin.Context) {
 		})
 		return
 	}
-	var token models.Token
-	result := ah.databaseConfig.DB.Where("token = ? AND type = ? AND used_at IS NULL", tokenString, models.TokenForgotPassword).First(&token)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	token, err := ah.tokenService.GetToken(tokenString)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "invalid token",
 			})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": result.Error.Error(),
+			"message": err.Error(),
 		})
 		return
 	}
@@ -282,23 +270,11 @@ func (ah *AuthHandler) ResetPassword(ctx *gin.Context) {
 		})
 		return
 	}
-	hashedPassword, _ := utils.HashPassword(resetPassword.Password)
-	user.Password = hashedPassword
-	result = ah.databaseConfig.DB.Save(&user)
-	if result.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": result.Error.Error(),
-		})
-		return
-	}
 
-	// update token's used at so the token cannot be used twice or more
-	now := time.Now()
-	token.UsedAt = &now
-	result = ah.databaseConfig.DB.Save(&token)
-	if result.Error != nil {
+	err = ah.userService.UpdateUserPassword(user, resetPassword.Password)
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": result.Error.Error(),
+			"message": err.Error(),
 		})
 		return
 	}

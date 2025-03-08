@@ -1,25 +1,33 @@
 package middlewares
 
 import (
-	"gin-gorm-rest-api/services"
+	"fmt"
+	"gin-gorm-rest-api/lib"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type LogMiddleware struct {
-	logService *services.LogService
+	logger *zap.Logger
 }
 
-func NewLogMiddleware(logService *services.LogService) *LogMiddleware {
-	return &LogMiddleware{logService}
+func NewLogMiddleware(libLogger *lib.LibLogger) *LogMiddleware {
+	return &LogMiddleware{logger: libLogger.Logger}
 }
 
-func (lm *LogMiddleware) Log(c *gin.Context) {
+func (lm *LogMiddleware) Handler(c *gin.Context) {
 	c.Next()
-	lm.logService.WithFields(map[string]interface{}{
-		"endpoint": c.Request.URL.String(),
-		"method":   c.Request.Method,
-		"status":   c.Writer.Status(),
-		"ip":       c.ClientIP(),
-	}, "LogMiddleware")
+
+	method := c.Request.Method
+	path := c.Request.URL.Path
+	status := c.Writer.Status()
+	ip := c.ClientIP()
+
+	lm.logger.Info(fmt.Sprintf("%s %s %d", method, path, status),
+		zap.Any("method", method),
+		zap.Any("path", path),
+		zap.Any("status", status),
+		zap.Any("ip", ip),
+	)
 }

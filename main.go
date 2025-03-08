@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/handlers"
+	"gin-gorm-rest-api/lib"
 	"gin-gorm-rest-api/middlewares"
 	"gin-gorm-rest-api/routes"
 	"gin-gorm-rest-api/services"
@@ -19,13 +19,11 @@ import (
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("error loading `.env` file: " + err.Error())
+		panic("error loading `.env` file: " + err.Error())
 	}
 
 	Env := os.Getenv("ENV")
-	if Env == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.MaxMultipartMemory = 8 << 20
 	router.Use(cors.New(cors.Config{
@@ -39,9 +37,9 @@ func main() {
 	router.Static("/assets", "./assets")
 
 	// init routes
-	allRoutes, logService, logMiddleware := InitRoutes(router)
-	logService.Init()
-	router.Use(logMiddleware.Log)
+	allRoutes, allMiddlewares := InitRoutes(router)
+	router.Use(allMiddlewares.logMiddleware.Handler)
+	router.Use(allMiddlewares.errorMiddleware.Handler)
 	for _, route := range allRoutes {
 		route.Init(router)
 	}
@@ -56,7 +54,7 @@ type Route interface {
 	Init(r *gin.Engine)
 }
 
-func ProvideMultiple(container *dig.Container, constructors []interface{}) error {
+func ProvideMultiple(container *dig.Container, constructors []any) error {
 	for _, constructor := range constructors {
 		if err := container.Provide(constructor); err != nil {
 			return err
@@ -65,21 +63,28 @@ func ProvideMultiple(container *dig.Container, constructors []interface{}) error
 	return nil
 }
 
-func InitRoutes(router *gin.Engine) ([]Route, *services.LogService, *middlewares.LogMiddleware) {
+type AllMiddleware struct {
+	logMiddleware   *middlewares.LogMiddleware
+	errorMiddleware *middlewares.ErrorMiddleware
+}
+
+func InitRoutes(router *gin.Engine) ([]Route, AllMiddleware) {
 	container := dig.New()
-	if err := ProvideMultiple(container, []interface{}{
-		// configs
-		configs.NewDatabaseConfig,
+	if err := ProvideMultiple(container, []any{
+		// lib
+		lib.NewLogger,
+		lib.NewDatabase,
 		// middlewares
 		middlewares.NewAuthMiddleware,
 		middlewares.NewLogMiddleware,
+		middlewares.NewErrorMiddleware,
 		// services
 		services.NewFileService,
 		services.NewJwtService,
 		services.NewMailService,
 		services.NewRoleService,
 		services.NewUserService,
-		services.NewLogService,
+		services.NewTokenService,
 		// handlers
 		handlers.NewAuthUserHandler,
 		handlers.NewAuthHandler,
@@ -98,19 +103,22 @@ func InitRoutes(router *gin.Engine) ([]Route, *services.LogService, *middlewares
 	}
 
 	allRoutes := []Route{}
-	var logService *services.LogService
-	var logMiddleware *middlewares.LogMiddleware
+	var allMiddlewares AllMiddleware
 
 	if err := container.Invoke(func(
 		authRoute *routes.AuthRoute,
 		fileRoute *routes.FileRoute,
-		roleRoute *routes.RoleRoute, rootRoute *routes.RootRoute, userRoute *routes.UserRoute, ls *services.LogService, lm *middlewares.LogMiddleware) {
+		roleRoute *routes.RoleRoute,
+		rootRoute *routes.RootRoute,
+		userRoute *routes.UserRoute,
+		em *middlewares.ErrorMiddleware,
+		lm *middlewares.LogMiddleware) {
 		allRoutes = []Route{authRoute, fileRoute, roleRoute, rootRoute, userRoute}
-		logService = ls
-		logMiddleware = lm
+		allMiddlewares.logMiddleware = lm
+		allMiddlewares.errorMiddleware = em
 	}); err != nil {
 		panic(err)
 	}
 
-	return allRoutes, logService, logMiddleware
+	return allRoutes, allMiddlewares
 }

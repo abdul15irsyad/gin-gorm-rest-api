@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/dtos"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
@@ -15,12 +14,11 @@ import (
 )
 
 type FileHandler struct {
-	fileService    *services.FileService
-	databaseConfig *configs.DatabaseConfig
+	fileService *services.FileService
 }
 
-func NewFileHandler(fileService *services.FileService, databaseConfig *configs.DatabaseConfig) *FileHandler {
-	return &FileHandler{fileService, databaseConfig}
+func NewFileHandler(fileService *services.FileService) *FileHandler {
+	return &FileHandler{fileService}
 }
 
 func (fh *FileHandler) GetFile(ctx *gin.Context) {
@@ -130,7 +128,7 @@ func (fh *FileHandler) DeleteFile(ctx *gin.Context) {
 		return
 	}
 
-	fh.databaseConfig.DB.Delete(&file)
+	fh.fileService.DeleteFile(file.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete file",

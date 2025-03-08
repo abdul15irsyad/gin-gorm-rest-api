@@ -1,23 +1,24 @@
 package handlers
 
 import (
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/dtos"
+	"gin-gorm-rest-api/lib"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type AuthUserHandler struct {
-	userService    *services.UserService
-	databaseConfig *configs.DatabaseConfig
+	userService *services.UserService
+	db          *gorm.DB
 }
 
-func NewAuthUserHandler(userService *services.UserService, databaseConfig *configs.DatabaseConfig) *AuthUserHandler {
-	return &AuthUserHandler{userService, databaseConfig}
+func NewAuthUserHandler(userService *services.UserService, libDB *lib.LibDatabase) *AuthUserHandler {
+	return &AuthUserHandler{userService, libDB.Database}
 }
 
 func (auh *AuthUserHandler) AuthUser(ctx *gin.Context) {
@@ -45,7 +46,7 @@ func (auh *AuthUserHandler) UpdateAuthUser(ctx *gin.Context) {
 	user := authUser.(models.User)
 	user.Name = updateAuthUserDto.Name
 	user.Email = updateAuthUserDto.Email
-	auh.databaseConfig.DB.Save(&user)
+	auh.db.Save(&user)
 	user, _ = auh.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -89,7 +90,7 @@ func (auh *AuthUserHandler) UpdateAuthUserPassword(ctx *gin.Context) {
 		return
 	}
 	user.Password = hashedPassword
-	auh.databaseConfig.DB.Save(&user)
+	auh.db.Save(&user)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update auth user password",

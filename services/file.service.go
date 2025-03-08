@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/lib"
 	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/utils"
 	"math"
@@ -13,20 +13,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type FileService struct {
-	databaseConfig *configs.DatabaseConfig
+	db *gorm.DB
 }
 
-func NewFileService(databaseConfig *configs.DatabaseConfig) *FileService {
-	return &FileService{databaseConfig}
+func NewFileService(libDB *lib.LibDatabase) *FileService {
+	return &FileService{db: libDB.Database}
 }
 
 func (fs *FileService) GetFile(id uuid.UUID) (models.File, error) {
 	var file models.File
-	result := fs.databaseConfig.DB.Preload(clause.Associations).First(&file, "id = ?", id)
+	result := fs.db.Preload(clause.Associations).First(&file, "id = ?", id)
 	if result.Error != nil {
 		return models.File{}, result.Error
 	}
@@ -38,7 +39,7 @@ func (fs *FileService) GetPaginatedFiles(page int, limit int, search *string) ([
 	var files []models.File
 	offset := (page - 1) * limit
 
-	query := fs.databaseConfig.DB.Model(&models.File{})
+	query := fs.db.Model(&models.File{})
 	if search != nil && *search != "" {
 		query = query.Where("filename ILIKE ? OR original_filename ILIKE ? OR mime ILIKE ?", "%"+*search+"%", "%"+*search+"%", "%"+*search+"%")
 	}
@@ -80,7 +81,7 @@ func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.Fil
 		OriginalFilename: file.Filename,
 		Mime:             mime,
 	}
-	result := fs.databaseConfig.DB.Save(&newFile)
+	result := fs.db.Save(&newFile)
 	if result.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": result.Error.Error(),
@@ -90,4 +91,8 @@ func (fs *FileService) UploadAndCreateFile(ctx *gin.Context, file *multipart.Fil
 	newFile.AfterLoad()
 
 	return newFile, true
+}
+
+func (fs *FileService) DeleteFile(id uuid.UUID) {
+	fs.db.Delete(&models.User{}, id)
 }

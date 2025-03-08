@@ -7,10 +7,10 @@ import (
 )
 
 type ErrorResponse struct {
-	Field   string      `json:"field"`
-	Message string      `json:"message"`
-	Tag     string      `json:"tag"`
-	Value   interface{} `json:"value"`
+	Field   string `json:"field"`
+	Message string `json:"message"`
+	Tag     string `json:"tag"`
+	Value   any    `json:"value"`
 }
 
 func Validate[T any](dtos T) []ErrorResponse {

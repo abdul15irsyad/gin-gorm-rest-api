@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gin-gorm-rest-api/configs"
+	"gin-gorm-rest-api/lib"
 	"gin-gorm-rest-api/seeders"
 	"log"
 	"os"
@@ -11,14 +11,14 @@ import (
 
 func main() {
 	godotenv.Load(".env")
-	databaseConfig := configs.NewDatabaseConfig()
+	libDB := lib.NewDatabase()
 
-	seeders.FileSeeder(databaseConfig.DB)
-	seeders.RoleSeeder(databaseConfig.DB)
-	seeders.UserSeeder(databaseConfig.DB)
+	seeders.FileSeeder(libDB.Database)
+	seeders.RoleSeeder(libDB.Database)
+	seeders.UserSeeder(libDB.Database)
 	log.Println("all seeders executed")
 
-	db, _ := databaseConfig.DB.DB()
+	db, _ := libDB.Database.DB()
 	db.Close()
 	os.Exit(0)
 }

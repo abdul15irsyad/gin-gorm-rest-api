@@ -3,9 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/dtos"
-	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"gin-gorm-rest-api/utils/validations"
@@ -18,13 +16,12 @@ import (
 )
 
 type UserHandler struct {
-	userService    *services.UserService
-	fileService    *services.FileService
-	databaseConfig *configs.DatabaseConfig
+	userService *services.UserService
+	fileService *services.FileService
 }
 
-func NewUserHandler(userService *services.UserService, fileService *services.FileService, databaseConfig *configs.DatabaseConfig) *UserHandler {
-	return &UserHandler{userService, fileService, databaseConfig}
+func NewUserHandler(userService *services.UserService, fileService *services.FileService) *UserHandler {
+	return &UserHandler{userService, fileService}
 }
 
 func (uh *UserHandler) GetAllUsers(ctx *gin.Context) {
@@ -128,37 +125,13 @@ func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	// save to database
-	hashedPassword, err := utils.HashPassword(createUserDto.Password)
+	user, err := uh.userService.CreateUser(createUserDto)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	randomUuid, err := uuid.NewRandom()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-	roleId, _ := uuid.Parse(createUserDto.RoleId)
-	user := models.User{
-		BaseModel: models.BaseModel{Id: randomUuid},
-		Name:      createUserDto.Name,
-		Email:     createUserDto.Email,
-		Password:  hashedPassword,
-		RoleId:    roleId,
-	}
-	result := uh.databaseConfig.DB.Save(&user)
-	if result.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": result.Error.Error(),
-		})
-		return
-	}
-	user, _ = uh.userService.GetUser(user.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create user",
@@ -236,44 +209,33 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
+	// save to database
+	id, _ := uuid.Parse(paramId)
+	user, err := uh.userService.GetUser(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"message": "data not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
 	// save uploaded file
-	var newFileId *uuid.UUID = nil
+	var newImageFileId *uuid.UUID = nil
 	if updateUserDto.Image != nil {
 		newFile, ok := uh.fileService.UploadAndCreateFile(ctx, updateUserDto.Image)
 		if !ok {
 			return
 		}
-		newFileId = &newFile.Id
+		newImageFileId = &newFile.Id
 	}
 
-	// save to database
-	id, _ := uuid.Parse(paramId)
-	user, err := uh.userService.GetUser(id)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "data not found",
-		})
-		return
-	}
-	user.Name = updateUserDto.Name
-	user.Email = updateUserDto.Email
-	roleId, _ := uuid.Parse(updateUserDto.RoleId)
-	user.RoleId = roleId
-	if newFileId != nil {
-		user.ImageId = newFileId
-	}
-	if updateUserDto.Password != nil {
-		hashedPassword, err := utils.HashPassword(*updateUserDto.Password)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-		user.Password = hashedPassword
-	}
-	uh.databaseConfig.DB.Save(&user)
-	user, _ = uh.userService.GetUser(user.Id)
+	user, err = uh.userService.UpdateUser(id, updateUserDto, newImageFileId)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update user",
@@ -304,7 +266,7 @@ func (uh *UserHandler) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	uh.databaseConfig.DB.Delete(&user)
+	uh.userService.DeleteUser(user.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete user",

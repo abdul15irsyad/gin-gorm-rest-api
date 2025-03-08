@@ -16,4 +16,5 @@ func NewRootRoute(rootHandler *handlers.RootHandler) *RootRoute {
 
 func (rr *RootRoute) Init(route *gin.Engine) {
 	route.GET("/", rr.rootHandler.Root)
+	route.GET("/error", rr.rootHandler.Error)
 }

@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"errors"
-	"gin-gorm-rest-api/configs"
 	"gin-gorm-rest-api/dtos"
-	"gin-gorm-rest-api/models"
 	"gin-gorm-rest-api/services"
 	"gin-gorm-rest-api/utils"
 	"net/http"
@@ -17,12 +15,11 @@ import (
 )
 
 type RoleHandler struct {
-	roleService    *services.RoleService
-	databaseConfig *configs.DatabaseConfig
+	roleService *services.RoleService
 }
 
-func NewRoleHandler(roleService *services.RoleService, databaseConfig *configs.DatabaseConfig) *RoleHandler {
-	return &RoleHandler{roleService, databaseConfig}
+func NewRoleHandler(roleService *services.RoleService) *RoleHandler {
+	return &RoleHandler{roleService}
 }
 
 func (rh *RoleHandler) GetAllRoles(ctx *gin.Context) {
@@ -117,22 +114,13 @@ func (rh *RoleHandler) CreateRole(ctx *gin.Context) {
 		return
 	}
 
-	// save to database
-	randomUuid, err := uuid.NewRandom()
+	role, err := rh.roleService.CreateRole(createRoleDto)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	role := models.Role{
-		BaseModel: models.BaseModel{Id: randomUuid},
-		Name:      createRoleDto.Name,
-		Slug:      slug.Make(createRoleDto.Name),
-		Desc:      createRoleDto.Desc,
-	}
-	rh.databaseConfig.DB.Save(&role)
-	role, _ = rh.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "create role",
@@ -185,11 +173,6 @@ func (rh *RoleHandler) UpdateRole(ctx *gin.Context) {
 		})
 		return
 	}
-	role.Name = updateRoleDto.Name
-	role.Slug = slug.Make(updateRoleDto.Name)
-	role.Desc = updateRoleDto.Desc
-	rh.databaseConfig.DB.Save(&role)
-	role, _ = rh.roleService.GetRole(role.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "update role",
@@ -220,7 +203,7 @@ func (rh *RoleHandler) DeleteRole(ctx *gin.Context) {
 		return
 	}
 
-	rh.databaseConfig.DB.Delete(&role)
+	rh.roleService.DeleteRole(role.Id)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "delete role",
